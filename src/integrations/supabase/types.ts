@@ -14,16 +14,351 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendance_logs: {
+        Row: {
+          check_in_at: string | null
+          check_out_at: string | null
+          created_at: string
+          date: string
+          employee_profile_id: string
+          id: string
+          is_early_leave: boolean | null
+          is_late: boolean | null
+          notes: string | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          status: string
+          store_id: string
+          updated_at: string
+          user_id: string
+          work_hours: number | null
+        }
+        Insert: {
+          check_in_at?: string | null
+          check_out_at?: string | null
+          created_at?: string
+          date?: string
+          employee_profile_id: string
+          id?: string
+          is_early_leave?: boolean | null
+          is_late?: boolean | null
+          notes?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+          user_id: string
+          work_hours?: number | null
+        }
+        Update: {
+          check_in_at?: string | null
+          check_out_at?: string | null
+          created_at?: string
+          date?: string
+          employee_profile_id?: string
+          id?: string
+          is_early_leave?: boolean | null
+          is_late?: boolean | null
+          notes?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+          user_id?: string
+          work_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_logs_employee_profile_id_fkey"
+            columns: ["employee_profile_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brands: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brands_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      break_logs: {
+        Row: {
+          attendance_log_id: string
+          created_at: string
+          duration_minutes: number | null
+          end_at: string | null
+          id: string
+          start_at: string
+        }
+        Insert: {
+          attendance_log_id: string
+          created_at?: string
+          duration_minutes?: number | null
+          end_at?: string | null
+          id?: string
+          start_at?: string
+        }
+        Update: {
+          attendance_log_id?: string
+          created_at?: string
+          duration_minutes?: number | null
+          end_at?: string | null
+          id?: string
+          start_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "break_logs_attendance_log_id_fkey"
+            columns: ["attendance_log_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_profiles: {
+        Row: {
+          brand_id: string
+          created_at: string
+          employment_type: string | null
+          full_name: string
+          hire_date: string | null
+          id: string
+          organization_id: string
+          phone: string | null
+          position: string | null
+          store_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          employment_type?: string | null
+          full_name: string
+          hire_date?: string | null
+          id?: string
+          organization_id: string
+          phone?: string | null
+          position?: string | null
+          store_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          employment_type?: string | null
+          full_name?: string
+          hire_date?: string | null
+          id?: string
+          organization_id?: string
+          phone?: string | null
+          position?: string | null
+          store_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_profiles_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_profiles_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stores: {
+        Row: {
+          address: string | null
+          brand_id: string
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          brand_id: string
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          brand_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stores_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_store_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_store_roles_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_employee_profile_id: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: string
+      }
+      get_user_brand_ids: { Args: { _user_id: string }; Returns: string[] }
+      get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
+      get_user_store_ids: { Args: { _user_id: string }; Returns: string[] }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_role_or_higher: {
+        Args: {
+          _min_role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_store_member: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "super_admin"
+        | "brand_admin"
+        | "store_manager"
+        | "shift_leader"
+        | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +485,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "super_admin",
+        "brand_admin",
+        "store_manager",
+        "shift_leader",
+        "staff",
+      ],
+    },
   },
 } as const
