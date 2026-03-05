@@ -1,83 +1,198 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Paperclip, Pin, Hash, Users, ChefHat } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Send, Users, Plus, MessageSquare, Hash, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useChatRooms, useChatMessages, useSendMessage, useMarkAsRead, useCreateChatRoom } from '@/hooks/useChat';
+import { format, isToday, isYesterday } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { toast } from 'sonner';
 
-const demoChatRooms = [
-  { id: 1, name: '강남본점 전체', icon: Users, unread: 3, lastMessage: '오늘 마감 체크리스트 완료 부탁드립니다', time: '10:32' },
-  { id: 2, name: '주방팀', icon: ChefHat, unread: 1, lastMessage: '닭가슴살 재고 확인 완료', time: '10:15' },
-  { id: 3, name: '오픈팀 (3/2)', icon: Hash, unread: 0, lastMessage: '오픈 준비 시작합니다', time: '08:55' },
-  { id: 4, name: '공지채널', icon: Pin, unread: 2, lastMessage: '[공지] 3월 신메뉴 교육 일정', time: '어제' },
-];
+const formatMessageTime = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return format(d, 'HH:mm');
+};
 
-const demoMessages = [
-  { id: 1, sender: '김민수', content: '오늘 오픈 준비 시작합니다. 홀 테이블 세팅 부탁드려요.', time: '08:55', isMine: false },
-  { id: 2, sender: '이지은', content: '주방 프렙 시작했습니다. 오늘 예약 4팀이라 미리 준비하겠습니다.', time: '09:00', isMine: false },
-  { id: 3, sender: '나', content: '네, 알겠습니다! 홀 세팅 시작할게요.', time: '09:05', isMine: true },
-  { id: 4, sender: '시스템', content: '📋 오픈 체크리스트가 시작되었습니다.', time: '09:00', isSystem: true },
-  { id: 5, sender: '김민수', content: '14시에 VIP 고객 방문 예정입니다. 2번 테이블 준비해주세요.', time: '09:30', isMine: false },
-  { id: 6, sender: '시스템', content: '🚛 농협유통 식재료 입고가 10:00에 예정되어 있습니다.', time: '09:45', isSystem: true },
-  { id: 7, sender: '나', content: '입고 확인 준비하겠습니다.', time: '09:50', isMine: true },
-];
+const formatRoomTime = (dateStr: string | undefined) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isToday(d)) return format(d, 'HH:mm');
+  if (isYesterday(d)) return '어제';
+  return format(d, 'M/d', { locale: ko });
+};
 
 const Chat = () => {
-  const [selectedRoom, setSelectedRoom] = useState(1);
+  const { user } = useAuth();
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [newRoomName, setNewRoomName] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <div className="animate-fade-in">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">채팅</h1>
-      </div>
+  const { data: rooms = [], isLoading: roomsLoading } = useChatRooms();
+  const { data: messages = [], isLoading: messagesLoading } = useChatMessages(selectedRoomId);
+  const sendMessage = useSendMessage();
+  const markAsRead = useMarkAsRead();
+  const createRoom = useCreateChatRoom();
 
-      <div className="grid lg:grid-cols-[300px_1fr] gap-4 h-[calc(100vh-12rem)]">
-        {/* Chat Room List */}
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">채팅방</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {demoChatRooms.map((room) => (
-                <button
-                  key={room.id}
-                  onClick={() => setSelectedRoom(room.id)}
-                  className={`w-full flex items-center gap-3 p-3 text-left hover:bg-muted/50 transition-colors ${
-                    selectedRoom === room.id ? 'bg-muted' : ''
-                  }`}
-                >
-                  <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                    <room.icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium truncate">{room.name}</span>
-                      <span className="text-[10px] text-muted-foreground shrink-0">{room.time}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{room.lastMessage}</p>
-                  </div>
-                  {room.unread > 0 && (
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center">
-                      {room.unread}
-                    </span>
-                  )}
-                </button>
-              ))}
+  const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Mark as read when selecting room
+  useEffect(() => {
+    if (selectedRoomId) {
+      markAsRead(selectedRoomId);
+    }
+  }, [selectedRoomId, markAsRead]);
+
+  const handleSend = () => {
+    if (!message.trim() || !selectedRoomId) return;
+    sendMessage.mutate(
+      { roomId: selectedRoomId, content: message.trim() },
+      {
+        onSuccess: () => setMessage(''),
+        onError: () => toast.error('메시지 전송에 실패했습니다'),
+      }
+    );
+  };
+
+  const handleCreateRoom = () => {
+    if (!newRoomName.trim()) return;
+    createRoom.mutate(
+      { name: newRoomName.trim() },
+      {
+        onSuccess: (room) => {
+          setSelectedRoomId(room.id);
+          setNewRoomName('');
+          setDialogOpen(false);
+          toast.success('채팅방이 생성되었습니다');
+        },
+        onError: () => toast.error('채팅방 생성에 실패했습니다'),
+      }
+    );
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // Room list panel
+  const RoomList = () => (
+    <Card className="overflow-hidden h-full flex flex-col">
+      <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base">채팅방</CardTitle>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>새 채팅방 만들기</DialogTitle>
+            </DialogHeader>
+            <div className="flex gap-2 mt-2">
+              <Input
+                placeholder="채팅방 이름"
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateRoom()}
+              />
+              <Button onClick={handleCreateRoom} disabled={createRoom.isPending}>
+                만들기
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent className="p-0 flex-1 overflow-auto">
+        {roomsLoading ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">로딩 중...</div>
+        ) : rooms.length === 0 ? (
+          <div className="p-6 text-center">
+            <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">채팅방이 없습니다</p>
+            <p className="text-xs text-muted-foreground mt-1">+ 버튼으로 새 채팅방을 만들어보세요</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {rooms.map((room) => (
+              <button
+                key={room.id}
+                onClick={() => setSelectedRoomId(room.id)}
+                className={`w-full flex items-center gap-3 p-3 text-left hover:bg-muted/50 transition-colors ${
+                  selectedRoomId === room.id ? 'bg-muted' : ''
+                }`}
+              >
+                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                  {room.type === 'announcement' ? (
+                    <Hash className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Users className="w-4 h-4 text-primary" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium truncate">{room.name}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {formatRoomTime(room.last_message_at)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {room.last_message ?? '메시지가 없습니다'}
+                  </p>
+                </div>
+                {(room.unread_count ?? 0) > 0 && (
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                    {room.unread_count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
-        {/* Chat Messages */}
-        <Card className="flex flex-col overflow-hidden">
-          <CardHeader className="pb-3 border-b border-border">
-            <CardTitle className="text-base">
-              {demoChatRooms.find(r => r.id === selectedRoom)?.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
-            {demoMessages.map((msg) => {
-              if ((msg as any).isSystem) {
+  // Messages panel
+  const MessagesPanel = () => (
+    <Card className="flex flex-col overflow-hidden h-full">
+      <CardHeader className="pb-3 border-b border-border flex-row items-center gap-2 space-y-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden h-8 w-8 shrink-0"
+          onClick={() => setSelectedRoomId(null)}
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <CardTitle className="text-base">{selectedRoom?.name ?? '채팅'}</CardTitle>
+      </CardHeader>
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-3">
+          {messagesLoading ? (
+            <div className="text-center text-sm text-muted-foreground py-8">로딩 중...</div>
+          ) : messages.length === 0 ? (
+            <div className="text-center text-sm text-muted-foreground py-8">
+              첫 메시지를 보내보세요! 👋
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isMine = msg.sender_id === user?.id;
+              const isSystem = msg.message_type === 'system';
+
+              if (isSystem) {
                 return (
                   <div key={msg.id} className="text-center">
                     <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
@@ -86,44 +201,81 @@ const Chat = () => {
                   </div>
                 );
               }
+
               return (
-                <div key={msg.id} className={`flex ${msg.isMine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] ${msg.isMine ? 'order-1' : ''}`}>
-                    {!msg.isMine && (
-                      <p className="text-xs text-muted-foreground mb-1 ml-1">{msg.sender}</p>
+                <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[75%] ${isMine ? 'order-1' : ''}`}>
+                    {!isMine && (
+                      <p className="text-xs text-muted-foreground mb-1 ml-1">{msg.sender_name}</p>
                     )}
-                    <div className={`flex items-end gap-1 ${msg.isMine ? 'flex-row-reverse' : ''}`}>
-                      <div className={`px-3 py-2 rounded-2xl text-sm ${
-                        msg.isMine
-                          ? 'bg-primary text-primary-foreground rounded-br-md'
-                          : 'bg-muted rounded-bl-md'
-                      }`}>
+                    <div className={`flex items-end gap-1 ${isMine ? 'flex-row-reverse' : ''}`}>
+                      <div
+                        className={`px-3 py-2 rounded-2xl text-sm ${
+                          isMine
+                            ? 'bg-primary text-primary-foreground rounded-br-md'
+                            : 'bg-muted rounded-bl-md'
+                        }`}
+                      >
                         {msg.content}
                       </div>
-                      <span className="text-[10px] text-muted-foreground shrink-0">{msg.time}</span>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {formatMessageTime(msg.created_at)}
+                      </span>
                     </div>
                   </div>
                 </div>
               );
-            })}
-          </CardContent>
-          <div className="p-3 border-t border-border">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="shrink-0">
-                <Paperclip className="w-4 h-4" />
-              </Button>
-              <Input
-                placeholder="메시지를 입력하세요..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="flex-1"
-              />
-              <Button size="icon" className="shrink-0">
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </Card>
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
+      <div className="p-3 border-t border-border">
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="메시지를 입력하세요..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="flex-1"
+            disabled={!selectedRoomId}
+          />
+          <Button
+            size="icon"
+            className="shrink-0"
+            onClick={handleSend}
+            disabled={!message.trim() || sendMessage.isPending}
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  // Empty state for desktop when no room selected
+  const EmptyChat = () => (
+    <Card className="flex flex-col items-center justify-center h-full">
+      <MessageSquare className="w-12 h-12 text-muted-foreground mb-3" />
+      <p className="text-muted-foreground text-sm">채팅방을 선택하세요</p>
+    </Card>
+  );
+
+  return (
+    <div className="animate-fade-in h-[calc(100vh-8rem)] lg:h-[calc(100vh-6rem)]">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold">채팅</h1>
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-4 h-[calc(100%-3rem)]">
+        <RoomList />
+        {selectedRoomId ? <MessagesPanel /> : <EmptyChat />}
+      </div>
+
+      {/* Mobile layout */}
+      <div className="lg:hidden h-[calc(100%-3rem)]">
+        {selectedRoomId ? <MessagesPanel /> : <RoomList />}
       </div>
     </div>
   );
