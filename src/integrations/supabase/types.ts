@@ -372,6 +372,85 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_records: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          recorded_by: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          recorded_by: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          recorded_by?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_records_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_targets: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          store_id: string
+          target_amount: number
+          updated_at: string
+          year_month: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          store_id: string
+          target_amount?: number
+          updated_at?: string
+          year_month: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          store_id?: string
+          target_amount?: number
+          updated_at?: string
+          year_month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_targets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           address: string | null
