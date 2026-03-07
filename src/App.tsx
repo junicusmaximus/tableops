@@ -10,23 +10,15 @@ import Signup from "@/pages/Signup";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
-import TodayBriefing from "@/pages/TodayBriefing";
+import StaffManagement from "@/pages/StaffManagement";
 import Attendance from "@/pages/Attendance";
-import Schedule from "@/pages/Schedule";
-import Tasks from "@/pages/Tasks";
-import Reports from "@/pages/Reports";
-import Sales from "@/pages/Sales";
-import ServiceNotes from "@/pages/ServiceNotes";
-import Ingredients from "@/pages/Ingredients";
-import PurchaseOrders from "@/pages/PurchaseOrders";
-import Leave from "@/pages/Leave";
-import Documents from "@/pages/Documents";
-import Benefits from "@/pages/Benefits";
-import Glossary from "@/pages/Glossary";
+import ShiftSchedule from "@/pages/ShiftSchedule";
+import Checklists from "@/pages/Checklists";
 import Chat from "@/pages/Chat";
-import Announcements from "@/pages/Announcements";
-import Stores from "@/pages/Stores";
-import AdminSettings from "@/pages/AdminSettings";
+import Sales from "@/pages/Sales";
+import Reservations from "@/pages/Reservations";
+import Reports from "@/pages/Reports";
+import Settings from "@/pages/Settings";
 import MoreMenu from "@/pages/MoreMenu";
 import NotFound from "@/pages/NotFound";
 
@@ -69,23 +61,15 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
-              <Route path="today-briefing" element={<TodayBriefing />} />
+              <Route path="staff" element={<StaffManagement />} />
               <Route path="attendance" element={<Attendance />} />
-              <Route path="schedule" element={<Schedule />} />
-              <Route path="tasks" element={<Tasks />} />
-              <Route path="reports" element={<Reports />} />
-              <Route path="sales" element={<Sales />} />
-              <Route path="service-notes" element={<ServiceNotes />} />
-              <Route path="ingredients" element={<Ingredients />} />
-              <Route path="purchase-orders" element={<PurchaseOrders />} />
-              <Route path="leave" element={<Leave />} />
-              <Route path="documents" element={<Documents />} />
-              <Route path="benefits" element={<Benefits />} />
-              <Route path="glossary" element={<Glossary />} />
+              <Route path="schedule" element={<ShiftSchedule />} />
+              <Route path="checklists" element={<Checklists />} />
               <Route path="chat" element={<Chat />} />
-              <Route path="announcements" element={<Announcements />} />
-              <Route path="stores" element={<Stores />} />
-              <Route path="settings" element={<AdminSettings />} />
+              <Route path="sales" element={<Sales />} />
+              <Route path="reservations" element={<Reservations />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="settings" element={<Settings />} />
               <Route path="more" element={<MoreMenu />} />
             </Route>
             <Route path="*" element={<NotFound />} />
