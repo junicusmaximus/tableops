@@ -1,0 +1,1 @@
+UPDATE public.user_store_roles SET role = 'store_manager' WHERE user_id = 'a7a7baeb-fdd8-42e2-aa3b-e01ece22133b' AND store_id = 'c0000000-0000-0000-0000-000000000001';
