@@ -284,6 +284,119 @@ export type Database = {
           },
         ]
       }
+      checklist_runs: {
+        Row: {
+          assigned_user_id: string | null
+          business_date: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          note: string | null
+          photo_url: string | null
+          status: string
+          store_id: string
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          business_date?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          photo_url?: string | null
+          status?: string
+          store_id: string
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user_id?: string | null
+          business_date?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          photo_url?: string | null
+          status?: string
+          store_id?: string
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_runs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_runs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_templates: {
+        Row: {
+          assigned_role: string | null
+          checklist_type: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          requires_photo: boolean | null
+          sort_order: number | null
+          store_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_role?: string | null
+          checklist_type: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          requires_photo?: boolean | null
+          sort_order?: number | null
+          store_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_role?: string | null
+          checklist_type?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          requires_photo?: boolean | null
+          sort_order?: number | null
+          store_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_templates_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_profiles: {
         Row: {
           brand_id: string
@@ -372,6 +485,71 @@ export type Database = {
         }
         Relationships: []
       }
+      reservations: {
+        Row: {
+          created_at: string
+          created_by: string
+          customer_name: string
+          guest_count: number
+          id: string
+          memo: string | null
+          phone_number: string | null
+          reservation_date: string
+          reservation_source: string | null
+          reservation_time: string
+          seating_area: string | null
+          special_request: string | null
+          status: string
+          store_id: string
+          updated_at: string
+          vip_flag: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          customer_name: string
+          guest_count?: number
+          id?: string
+          memo?: string | null
+          phone_number?: string | null
+          reservation_date: string
+          reservation_source?: string | null
+          reservation_time: string
+          seating_area?: string | null
+          special_request?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+          vip_flag?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          customer_name?: string
+          guest_count?: number
+          id?: string
+          memo?: string | null
+          phone_number?: string | null
+          reservation_date?: string
+          reservation_source?: string | null
+          reservation_time?: string
+          seating_area?: string | null
+          special_request?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+          vip_flag?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_records: {
         Row: {
           amount: number
@@ -444,6 +622,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sales_targets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          break_minutes: number | null
+          created_at: string
+          created_by: string
+          end_time: string
+          id: string
+          notes: string | null
+          role: string | null
+          shift_date: string
+          start_time: string
+          store_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          break_minutes?: number | null
+          created_at?: string
+          created_by: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          role?: string | null
+          shift_date: string
+          start_time: string
+          store_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          break_minutes?: number | null
+          created_at?: string
+          created_by?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          role?: string | null
+          shift_date?: string
+          start_time?: string
+          store_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -563,12 +794,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role:
-        | "super_admin"
-        | "brand_admin"
-        | "store_manager"
-        | "shift_leader"
-        | "staff"
+      app_role: "owner" | "manager" | "kitchen_staff" | "hall_staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -696,13 +922,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: [
-        "super_admin",
-        "brand_admin",
-        "store_manager",
-        "shift_leader",
-        "staff",
-      ],
+      app_role: ["owner", "manager", "kitchen_staff", "hall_staff"],
     },
   },
 } as const
