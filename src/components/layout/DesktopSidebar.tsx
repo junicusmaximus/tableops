@@ -1,9 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, ClipboardCheck, FileText,
-  TrendingUp, MessageSquare, Bell, Settings, ChefHat, BookOpen,
-  ShoppingCart, AlertTriangle, Coffee, Gift, LogOut, Store,
-  Clock, Briefcase
+  TrendingUp, MessageSquare, Settings, ChefHat, LogOut,
+  Clock, CalendarDays, BookOpen
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -18,22 +17,14 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: '대시보드', group: '메인' },
-  { to: '/today-briefing', icon: Coffee, label: '오늘의 브리핑', group: '메인' },
-  { to: '/attendance', icon: Clock, label: '출퇴근 관리', group: '인사' },
-  { to: '/schedule', icon: Calendar, label: '스케줄 관리', group: '인사' },
-  { to: '/leave', icon: Briefcase, label: '휴가 관리', group: '인사' },
-  { to: '/tasks', icon: ClipboardCheck, label: '체크리스트', group: '운영' },
-  { to: '/reports', icon: FileText, label: '일지/보고서', group: '운영' },
-  { to: '/sales', icon: TrendingUp, label: '매출 관리', group: '운영' },
-  { to: '/service-notes', icon: Users, label: '고객 서비스 노트', group: '운영' },
-  { to: '/ingredients', icon: AlertTriangle, label: '식재료 관리', group: '운영' },
-  { to: '/purchase-orders', icon: ShoppingCart, label: '발주/입고', group: '운영' },
-  { to: '/documents', icon: FileText, label: '서류 관리', group: '관리' },
-  { to: '/benefits', icon: Gift, label: '복리후생', group: '관리' },
-  { to: '/glossary', icon: BookOpen, label: '용어/매뉴얼', group: '관리' },
+  { to: '/staff', icon: Users, label: '직원 관리', group: '인사' },
+  { to: '/attendance', icon: Clock, label: '근태 관리', group: '인사' },
+  { to: '/schedule', icon: Calendar, label: '스케줄', group: '인사' },
+  { to: '/checklists', icon: ClipboardCheck, label: '체크리스트', group: '운영' },
   { to: '/chat', icon: MessageSquare, label: '채팅', group: '소통' },
-  { to: '/announcements', icon: Bell, label: '공지사항', group: '소통' },
-  { to: '/stores', icon: Store, label: '매장 관리', group: '시스템' },
+  { to: '/sales', icon: TrendingUp, label: '매출', group: '운영' },
+  { to: '/reservations', icon: CalendarDays, label: '예약', group: '운영' },
+  { to: '/reports', icon: FileText, label: '리포트', group: '분석' },
   { to: '/settings', icon: Settings, label: '설정', group: '시스템' },
 ];
 
@@ -70,9 +61,10 @@ const DesktopSidebar = () => {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.to === '/'}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-0.5',
-                  location.pathname === item.to
+                  location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))
                     ? 'bg-sidebar-accent text-sidebar-primary font-medium'
                     : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                 )}

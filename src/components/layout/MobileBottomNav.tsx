@@ -1,13 +1,13 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Clock, Coffee, MessageSquare, MoreHorizontal
+  LayoutDashboard, Clock, MessageSquare, MoreHorizontal, CalendarDays
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/', icon: LayoutDashboard, label: '홈' },
-  { to: '/attendance', icon: Clock, label: '출퇴근' },
-  { to: '/today-briefing', icon: Coffee, label: '브리핑' },
+  { to: '/attendance', icon: Clock, label: '근태' },
+  { to: '/reservations', icon: CalendarDays, label: '예약' },
   { to: '/chat', icon: MessageSquare, label: '채팅' },
   { to: '/more', icon: MoreHorizontal, label: '더보기' },
 ];
@@ -19,7 +19,7 @@ const MobileBottomNav = () => {
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
       <div className="flex items-center justify-around h-16 px-2 safe-area-bottom">
         {tabs.map((tab) => {
-          const isActive = location.pathname === tab.to;
+          const isActive = tab.to === '/' ? location.pathname === '/' : location.pathname.startsWith(tab.to);
           return (
             <NavLink
               key={tab.to}
