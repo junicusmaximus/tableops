@@ -166,7 +166,7 @@ const Chat = () => {
     </Card>
   );
 
-  const MessagesPanel = () => (
+  const messagesPanel = (
     <Card className="flex flex-col overflow-hidden h-full">
       <CardHeader className="pb-3 border-b border-border flex-row items-center gap-2 space-y-0">
         <Button
