@@ -618,24 +618,42 @@ export type Database = {
       notification_preferences: {
         Row: {
           enable_all: boolean
+          enable_announcement: boolean
+          enable_checklist: boolean
+          enable_document_sign: boolean
+          enable_inventory: boolean
           enable_leave_request: boolean
           enable_leave_result: boolean
+          enable_schedule_change: boolean
+          enable_schedule_new: boolean
           id: string
           updated_at: string
           user_id: string
         }
         Insert: {
           enable_all?: boolean
+          enable_announcement?: boolean
+          enable_checklist?: boolean
+          enable_document_sign?: boolean
+          enable_inventory?: boolean
           enable_leave_request?: boolean
           enable_leave_result?: boolean
+          enable_schedule_change?: boolean
+          enable_schedule_new?: boolean
           id?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           enable_all?: boolean
+          enable_announcement?: boolean
+          enable_checklist?: boolean
+          enable_document_sign?: boolean
+          enable_inventory?: boolean
           enable_leave_request?: boolean
           enable_leave_result?: boolean
+          enable_schedule_change?: boolean
+          enable_schedule_new?: boolean
           id?: string
           updated_at?: string
           user_id?: string
