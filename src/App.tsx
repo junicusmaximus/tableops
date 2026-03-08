@@ -96,6 +96,7 @@ const App = () => (
               <Route path="settings" element={<Settings />} />
               <Route path="more" element={<MoreMenu />} />
               <Route path="stores" element={<Stores />} />
+              <Route path="work-stats" element={<WorkStats />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
