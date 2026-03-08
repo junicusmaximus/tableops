@@ -2,7 +2,8 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, ClipboardCheck, FileText,
   TrendingUp, MessageSquare, Settings, ChefHat, LogOut,
-  Clock, CalendarDays, BookOpen
+  Clock, CalendarDays, BookOpen, Coffee, Briefcase,
+  AlertTriangle, ShoppingCart, Upload, Gift, Notebook
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -12,20 +13,25 @@ interface NavItem {
   to: string;
   icon: React.ElementType;
   label: string;
-  group?: string;
+  group: string;
 }
 
 const navItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: '대시보드', group: '메인' },
-  { to: '/staff', icon: Users, label: '직원 관리', group: '인사' },
-  { to: '/attendance', icon: Clock, label: '근태 관리', group: '인사' },
-  { to: '/schedule', icon: Calendar, label: '스케줄', group: '인사' },
+  { to: '/today-briefing', icon: Coffee, label: '오늘의 브리핑', group: '메인' },
+  { to: '/attendance', icon: Clock, label: '출퇴근 관리', group: '인사' },
+  { to: '/schedule', icon: Calendar, label: '스케줄 관리', group: '인사' },
+  { to: '/leave', icon: Briefcase, label: '휴가 관리', group: '인사' },
   { to: '/checklists', icon: ClipboardCheck, label: '체크리스트', group: '운영' },
+  { to: '/reports', icon: FileText, label: '일지/보고서', group: '운영' },
+  { to: '/sales', icon: TrendingUp, label: '매출 관리', group: '운영' },
+  { to: '/service-notes', icon: Notebook, label: '고객 서비스 노트', group: '운영' },
+  { to: '/ingredients', icon: AlertTriangle, label: '식재료 관리', group: '관리' },
+  { to: '/purchase-orders', icon: ShoppingCart, label: '발주/입고', group: '관리' },
+  { to: '/documents', icon: Upload, label: '서류 관리', group: '관리' },
+  { to: '/benefits', icon: Gift, label: '복리후생', group: '관리' },
+  { to: '/glossary', icon: BookOpen, label: '용어/매뉴얼', group: '관리' },
   { to: '/chat', icon: MessageSquare, label: '채팅', group: '소통' },
-  { to: '/sales', icon: TrendingUp, label: '매출', group: '운영' },
-  { to: '/reservations', icon: CalendarDays, label: '예약', group: '운영' },
-  { to: '/reports', icon: FileText, label: '리포트', group: '분석' },
-  { to: '/settings', icon: Settings, label: '설정', group: '시스템' },
 ];
 
 const DesktopSidebar = () => {
@@ -33,9 +39,8 @@ const DesktopSidebar = () => {
   const location = useLocation();
 
   const groups = navItems.reduce((acc, item) => {
-    const group = item.group || '기타';
-    if (!acc[group]) acc[group] = [];
-    acc[group].push(item);
+    if (!acc[item.group]) acc[item.group] = [];
+    acc[item.group].push(item);
     return acc;
   }, {} as Record<string, NavItem[]>);
 
@@ -78,6 +83,18 @@ const DesktopSidebar = () => {
       </ScrollArea>
 
       <div className="p-3 border-t border-sidebar-border">
+        <NavLink
+          to="/settings"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-1',
+            location.pathname === '/settings'
+              ? 'bg-sidebar-accent text-sidebar-primary font-medium'
+              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+          )}
+        >
+          <Settings className="w-4 h-4" />
+          <span>설정</span>
+        </NavLink>
         <button
           onClick={signOut}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors w-full"
