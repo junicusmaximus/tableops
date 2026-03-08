@@ -1,0 +1,1 @@
+DELETE FROM shifts WHERE shift_date = '2026-03-08' AND id != '5ba20ee2-b032-415c-81c8-23a931cec1a3'
