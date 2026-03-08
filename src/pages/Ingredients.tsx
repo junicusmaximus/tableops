@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/common/StatusBadge';
 import EmptyState from '@/components/common/EmptyState';
+import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
 import { Plus, Search, ChefHat, Package, AlertTriangle, CheckCircle, Clock, Trash2, Eye, Edit, MinusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -200,15 +201,14 @@ const Ingredients = () => {
           {/* toolbar */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="품목명 또는 담당자 검색..." className="pl-9" value={prepSearch} onChange={e => setPrepSearch(e.target.value)} />
+              <ItemAutocomplete storeId={null} value={prepSearch} onChange={setPrepSearch} typeFilter="prep" placeholder="품목명, 약어코드, 담당자 검색..." allowQuickCreate={false} />
             </div>
             <Dialog open={prepAddOpen} onOpenChange={setPrepAddOpen}>
               <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" />제조 등록</Button></DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>제조 품목 등록</DialogTitle></DialogHeader>
                 <div className="space-y-3 pt-2">
-                  <div><Label>품목명 *</Label><Input value={prepForm.name} onChange={e => setPrepForm({ ...prepForm, name: e.target.value })} placeholder="예: 허머스" /></div>
+                  <div><Label>품목명 *</Label><ItemAutocomplete storeId={null} value={prepForm.name} onChange={v => setPrepForm({ ...prepForm, name: v })} typeFilter="prep" placeholder="품목명, 약어코드로 검색..." allowQuickCreate={true} /></div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>제조시간</Label><Input type="time" value={prepForm.prepTime} onChange={e => setPrepForm({ ...prepForm, prepTime: e.target.value })} /></div>
                     <div><Label>담당자 *</Label><Input value={prepForm.assignee} onChange={e => setPrepForm({ ...prepForm, assignee: e.target.value })} placeholder="예: 김주방" /></div>
@@ -297,15 +297,14 @@ const Ingredients = () => {
           {/* toolbar */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="식재료명 또는 카테고리 검색..." className="pl-9" value={rawSearch} onChange={e => setRawSearch(e.target.value)} />
+              <ItemAutocomplete storeId={null} value={rawSearch} onChange={setRawSearch} typeFilter="raw" placeholder="식재료명, 약어코드, 카테고리 검색..." allowQuickCreate={false} />
             </div>
             <Dialog open={rawAddOpen} onOpenChange={setRawAddOpen}>
               <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" />입고 등록</Button></DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>원재료 입고 등록</DialogTitle></DialogHeader>
                 <div className="space-y-3 pt-2">
-                  <div><Label>식재료명 *</Label><Input value={rawForm.name} onChange={e => setRawForm({ ...rawForm, name: e.target.value })} placeholder="예: 닭가슴살" /></div>
+                  <div><Label>식재료명 *</Label><ItemAutocomplete storeId={null} value={rawForm.name} onChange={v => setRawForm({ ...rawForm, name: v })} typeFilter="raw" placeholder="식재료명, 약어코드로 검색..." allowQuickCreate={true} /></div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>카테고리</Label>
                       <Select value={rawForm.category} onValueChange={v => setRawForm({ ...rawForm, category: v })}>

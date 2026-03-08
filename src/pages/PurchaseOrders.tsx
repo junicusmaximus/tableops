@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -76,7 +77,7 @@ const PurchaseOrders = () => {
             <DialogHeader><DialogTitle>발주 등록</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
               <div><Label>공급업체 *</Label><Input value={form.supplier} onChange={e => setForm({ ...form, supplier: e.target.value })} placeholder="예: 농협유통" /></div>
-              <div><Label>품목 * (쉼표로 구분)</Label><Textarea value={form.items} onChange={e => setForm({ ...form, items: e.target.value })} placeholder="양파 10kg, 당근 5kg, 감자 8kg" /></div>
+              <div><Label>품목 * (쉼표로 구분)</Label><ItemAutocomplete storeId={null} value={form.items} onChange={v => setForm({ ...form, items: v })} placeholder="품목명, 약어코드로 검색 (쉼표 구분)" allowQuickCreate={true} /></div>
               <div><Label>입고 예정 시간</Label><Input type="time" value={form.expectedTime} onChange={e => setForm({ ...form, expectedTime: e.target.value })} /></div>
               <div><Label>메모</Label><Input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="특이사항" /></div>
               <Button onClick={handleAdd} className="w-full">등록</Button>

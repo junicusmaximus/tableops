@@ -3,13 +3,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import StatusBadge, { StatusType } from '@/components/common/StatusBadge';
 import EmptyState from '@/components/common/EmptyState';
-import { Plus, Search, Notebook, Edit, Trash2 } from 'lucide-react';
+import { Plus, Notebook, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Note {
@@ -143,10 +144,13 @@ const ServiceNotes = () => {
         ))}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="고객명 또는 내용 검색..." className="pl-9" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-      </div>
+      <ItemAutocomplete
+        storeId={null}
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="고객명, 내용 또는 품목 검색..."
+        allowQuickCreate={false}
+      />
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
