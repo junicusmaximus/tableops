@@ -27,6 +27,14 @@ export interface SenderProfile {
   status?: string | null;
 }
 
+export interface ReadByUser {
+  user_id: string;
+  full_name: string;
+  profile_image_url?: string | null;
+  position?: string | null;
+  read_at: string;
+}
+
 export interface ChatMessage {
   id: string;
   room_id: string;
@@ -40,6 +48,7 @@ export interface ChatMessage {
   file_name?: string | null;
   file_type?: string | null;
   read_count?: number;
+  read_by?: ReadByUser[];
   mentions?: string[];
 }
 
