@@ -4,17 +4,36 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert } from 'lucide-react';
+import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
+import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/hooks/useNotificationPreferences';
 
 const Settings = () => {
   const { data: profile } = useEmployeeProfile();
   const isManager = useIsManager();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+
+  const { data: notifPrefs } = useNotificationPreferences();
+  const updatePrefs = useUpdateNotificationPreferences();
+
+  const enableAll = notifPrefs?.enable_all ?? true;
+  const enableLeaveRequest = notifPrefs?.enable_leave_request ?? true;
+  const enableLeaveResult = notifPrefs?.enable_leave_result ?? true;
+
+  const handleToggle = (field: 'enable_all' | 'enable_leave_request' | 'enable_leave_result', value: boolean) => {
+    updatePrefs.mutate(
+      { [field]: value },
+      {
+        onSuccess: () => toast({ title: '저장 완료', description: '알림 설정이 변경되었습니다.' }),
+        onError: (e) => toast({ title: '오류', description: e.message, variant: 'destructive' }),
+      }
+    );
+  };
 
   const handleSave = () => {
     setSaving(true);
@@ -35,11 +54,59 @@ const Settings = () => {
         <p className="text-muted-foreground text-sm mt-1">시스템 및 연동 관리</p>
       </div>
 
-      <Tabs defaultValue="branch">
+      <Tabs defaultValue="notifications">
         <TabsList>
+          <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-1" />알림</TabsTrigger>
           <TabsTrigger value="branch"><Store className="w-4 h-4 mr-1" />매장</TabsTrigger>
           <TabsTrigger value="integrations"><Plug className="w-4 h-4 mr-1" />연동</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="notifications" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">알림 설정</CardTitle>
+              <CardDescription>알림 수신 여부를 설정합니다</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">전체 알림 받기</p>
+                  <p className="text-xs text-muted-foreground">모든 알림을 켜거나 끕니다</p>
+                </div>
+                <Switch
+                  checked={enableAll}
+                  onCheckedChange={(v) => handleToggle('enable_all', v)}
+                />
+              </div>
+
+              {isManager && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">휴가 신청 알림 받기</p>
+                    <p className="text-xs text-muted-foreground">직원이 휴가를 신청하면 알림을 받습니다</p>
+                  </div>
+                  <Switch
+                    checked={enableLeaveRequest}
+                    onCheckedChange={(v) => handleToggle('enable_leave_request', v)}
+                    disabled={!enableAll}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">휴가 승인/반려 결과 알림 받기</p>
+                  <p className="text-xs text-muted-foreground">내 휴가 신청 결과를 알림으로 받습니다</p>
+                </div>
+                <Switch
+                  checked={enableLeaveResult}
+                  onCheckedChange={(v) => handleToggle('enable_leave_result', v)}
+                  disabled={!enableAll}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="branch" className="space-y-4 mt-4">
           <Card>
