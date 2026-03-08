@@ -27,6 +27,7 @@ const navItems: NavItem[] = [
   { to: '/work-stats', icon: TrendingUp, label: '근무 통계', group: '인사' },
   { to: '/schedule', icon: Calendar, label: '내 스케줄', group: '인사' },
   { to: '/schedule-management', icon: CalendarCog, label: '스케줄 관리', group: '인사', managerOnly: true },
+  { to: '/ai-schedule', icon: Sparkles, label: 'AI 스케줄 추천', group: '인사', managerOnly: true },
   { to: '/leave', icon: Briefcase, label: '휴가 관리', group: '인사' },
   { to: '/staff', icon: Users, label: '직원 관리', group: '운영', managerOnly: true },
   { to: '/checklists', icon: ClipboardCheck, label: '체크리스트', group: '운영' },
