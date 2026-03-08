@@ -1,26 +1,40 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, X } from 'lucide-react';
+import { Bell, Search, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-
-const notifications = [
-  { id: 1, title: '닭가슴살 유통기한 D-1', desc: '긴급 확인이 필요합니다', time: '10분 전', read: false },
-  { id: 2, title: '박서준 휴가 신청', desc: '3월 5일 연차 요청', time: '30분 전', read: false },
-  { id: 3, title: '오픈 체크리스트 미완료', desc: '3개 항목이 남아있습니다', time: '1시간 전', read: true },
-];
+import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications';
+import { formatDistanceToNow } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 const TopHeader = () => {
   const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [readIds, setReadIds] = useState<Set<number>>(new Set());
 
-  const unreadCount = notifications.filter(n => !n.read && !readIds.has(n.id)).length;
+  const { data: notifications = [] } = useNotifications();
+  const unreadCount = useUnreadCount();
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
 
-  const handleNotifClick = (id: number) => {
-    setReadIds(prev => new Set(prev).add(id));
+  const handleNotifClick = (notif: typeof notifications[0]) => {
+    if (!notif.is_read) {
+      markAsRead.mutate(notif.id);
+    }
+    // Navigate to leave page if it's a leave-related notification
+    if (notif.related_entity_type === 'leave_request') {
+      navigate('/leave');
+      setNotifOpen(false);
+    }
+  };
+
+  const formatTime = (dateStr: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: ko });
+    } catch {
+      return '';
+    }
   };
 
   const searchResults = [
@@ -105,22 +119,33 @@ const TopHeader = () => {
 
       <Sheet open={notifOpen} onOpenChange={setNotifOpen}>
         <SheetContent>
-          <SheetHeader><SheetTitle>알림</SheetTitle></SheetHeader>
+          <SheetHeader>
+            <div className="flex items-center justify-between">
+              <SheetTitle>알림</SheetTitle>
+              {unreadCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={() => markAllAsRead.mutate()} className="text-xs">
+                  <Check className="w-3 h-3 mr-1" />모두 읽음
+                </Button>
+              )}
+            </div>
+          </SheetHeader>
           <div className="space-y-2 mt-4">
-            {notifications.map(n => (
+            {notifications.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">알림이 없습니다.</p>
+            ) : notifications.map(n => (
               <div
                 key={n.id}
                 className={`p-3 rounded-lg border border-border cursor-pointer transition-colors hover:bg-muted/50 ${
-                  !n.read && !readIds.has(n.id) ? 'bg-primary/5 border-primary/20' : ''
+                  !n.is_read ? 'bg-primary/5 border-primary/20' : ''
                 }`}
-                onClick={() => handleNotifClick(n.id)}
+                onClick={() => handleNotifClick(n)}
               >
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">{n.title}</p>
-                  {!n.read && !readIds.has(n.id) && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
+                  {!n.is_read && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">{n.desc}</p>
-                <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
+                {n.message && <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>}
+                <p className="text-xs text-muted-foreground mt-1">{formatTime(n.created_at)}</p>
               </div>
             ))}
           </div>
