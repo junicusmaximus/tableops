@@ -88,7 +88,7 @@ const Chat = () => {
     }
   };
 
-  const RoomList = () => (
+  const roomList = (
     <Card className="overflow-hidden h-full flex flex-col">
       <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">채팅방</CardTitle>
