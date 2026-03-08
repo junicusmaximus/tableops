@@ -387,11 +387,11 @@ const ChatMessageArea = ({
                           )}
 
                           {/* Read receipt */}
-                          {isMine && (msg.read_count ?? 0) > 0 && (
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <CheckCheck className="w-3 h-3 text-primary" />
-                              <span className="text-[10px] text-muted-foreground">읽음 {msg.read_count}</span>
-                            </div>
+                          {isMine && (
+                            <ReadReceiptPopover
+                              readCount={msg.read_count ?? 0}
+                              readBy={msg.read_by ?? []}
+                            />
                           )}
                         </div>
 
