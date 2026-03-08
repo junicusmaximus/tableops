@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/common/StatusBadge';
 import {
   AlertTriangle, Users, Coffee, ShoppingCart, Clock,
-  TrendingUp, FileText, MessageSquare, ChevronRight
+  TrendingUp, FileText, MessageSquare, ChevronRight, CheckCircle
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const briefingData = {
   reservations: [
@@ -30,6 +32,15 @@ const briefingData = {
 };
 
 const TodayBriefing = () => {
+  const { toast } = useToast();
+  const [confirmedReceiving, setConfirmedReceiving] = useState<Record<number, boolean>>({});
+  const [handoverAcknowledged, setHandoverAcknowledged] = useState(false);
+
+  const handleConfirmReceiving = (idx: number) => {
+    setConfirmedReceiving(prev => ({ ...prev, [idx]: true }));
+    toast({ title: '입고 확인', description: `${briefingData.receivingChecks[idx].supplier} 입고가 확인되었습니다.` });
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div>
@@ -38,30 +49,26 @@ const TodayBriefing = () => {
       </div>
 
       {/* 인력 현황 */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" />
-            <CardTitle className="text-base">인력 현황</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold">{briefingData.staffing.scheduled}</p>
-              <p className="text-xs text-muted-foreground">예정 인원</p>
+      <Link to="/attendance">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                <CardTitle className="text-base">인력 현황</CardTitle>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-success">{briefingData.staffing.confirmed}</p>
-              <p className="text-xs text-muted-foreground">확정 인원</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div><p className="text-2xl font-bold">{briefingData.staffing.scheduled}</p><p className="text-xs text-muted-foreground">예정 인원</p></div>
+              <div><p className="text-2xl font-bold text-success">{briefingData.staffing.confirmed}</p><p className="text-xs text-muted-foreground">확정 인원</p></div>
+              <div><p className="text-2xl font-bold text-destructive">{briefingData.staffing.missing}</p><p className="text-xs text-muted-foreground">미확인</p></div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-destructive">{briefingData.staffing.missing}</p>
-              <p className="text-xs text-muted-foreground">미확인</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* 예약 & 고객 노트 */}
       <Card>
@@ -71,21 +78,23 @@ const TodayBriefing = () => {
               <Coffee className="w-4 h-4 text-accent" />
               <CardTitle className="text-base">오늘의 예약 · 고객 노트</CardTitle>
             </div>
-            <StatusBadge status="info" label={`${briefingData.reservations.length}건`} />
+            <Link to="/reservations"><Button variant="ghost" size="sm">전체 보기 <ChevronRight className="w-3 h-3 ml-1" /></Button></Link>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {briefingData.reservations.map((res, i) => (
-            <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-              <div className="text-sm font-mono font-semibold text-primary shrink-0 w-12">{res.time}</div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{res.name}</span>
-                  <span className="text-xs text-muted-foreground">{res.party}명</span>
+            <Link key={i} to="/reservations" className="block">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                <div className="text-sm font-mono font-semibold text-primary shrink-0 w-12">{res.time}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{res.name}</span>
+                    <span className="text-xs text-muted-foreground">{res.party}명</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{res.note}</p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">{res.note}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </CardContent>
       </Card>
@@ -98,24 +107,23 @@ const TodayBriefing = () => {
               <AlertTriangle className="w-4 h-4 text-warning" />
               <CardTitle className="text-base">유통기한 임박 식재료</CardTitle>
             </div>
-            <StatusBadge status="warning" label={`${briefingData.expiringIngredients.length}건`} />
+            <Link to="/ingredients"><Button variant="ghost" size="sm">관리 <ChevronRight className="w-3 h-3 ml-1" /></Button></Link>
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
           {briefingData.expiringIngredients.map((item, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-              <div>
-                <p className="text-sm font-medium">{item.name}</p>
-                <p className="text-xs text-muted-foreground">잔량: {item.qty}</p>
+            <Link key={i} to="/ingredients" className="block">
+              <div className="flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 rounded px-1 transition-colors cursor-pointer">
+                <div>
+                  <p className="text-sm font-medium">{item.name}</p>
+                  <p className="text-xs text-muted-foreground">잔량: {item.qty}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={item.expiry === 'D-1' ? 'destructive' : 'warning'} label={item.expiry} />
+                  <span className="text-xs text-muted-foreground">{item.status}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <StatusBadge
-                  status={item.expiry === 'D-1' ? 'destructive' : 'warning'}
-                  label={item.expiry}
-                />
-                <span className="text-xs text-muted-foreground">{item.status}</span>
-              </div>
-            </div>
+            </Link>
           ))}
         </CardContent>
       </Card>
@@ -123,9 +131,12 @@ const TodayBriefing = () => {
       {/* 입고 확인 */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="w-4 h-4 text-info" />
-            <CardTitle className="text-base">오늘 입고 예정</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4 text-info" />
+              <CardTitle className="text-base">오늘 입고 예정</CardTitle>
+            </div>
+            <Link to="/purchase-orders"><Button variant="ghost" size="sm">전체 <ChevronRight className="w-3 h-3 ml-1" /></Button></Link>
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -135,7 +146,13 @@ const TodayBriefing = () => {
                 <p className="text-sm font-medium">{item.supplier}</p>
                 <p className="text-xs text-muted-foreground">{item.items} · {item.time} 예정</p>
               </div>
-              <StatusBadge status="default" label={item.status} />
+              {confirmedReceiving[i] ? (
+                <StatusBadge status="success" label="확인 완료" />
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => handleConfirmReceiving(i)}>
+                  <CheckCircle className="w-3.5 h-3.5 mr-1" />확인
+                </Button>
+              )}
             </div>
           ))}
         </CardContent>
@@ -153,25 +170,36 @@ const TodayBriefing = () => {
           <p className="text-sm text-foreground leading-relaxed bg-muted/50 p-3 rounded-lg">
             {briefingData.handoverMemo}
           </p>
+          {!handoverAcknowledged ? (
+            <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => { setHandoverAcknowledged(true); toast({ title: '확인 완료', description: '인수인계 사항을 확인했습니다.' }); }}>
+              <CheckCircle className="w-4 h-4 mr-1" />확인 완료
+            </Button>
+          ) : (
+            <p className="text-xs text-success text-center mt-3">✓ 확인 완료</p>
+          )}
         </CardContent>
       </Card>
 
       {/* 매출 목표 / 미해결 이슈 */}
       <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <TrendingUp className="w-6 h-6 text-primary mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground">오늘 매출 목표</p>
-            <p className="text-lg font-bold mt-1">₩{briefingData.salesTarget.today.toLocaleString()}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <MessageSquare className="w-6 h-6 text-destructive mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground">미해결 이슈</p>
-            <p className="text-lg font-bold mt-1">{briefingData.unresolvedIssues}건</p>
-          </CardContent>
-        </Card>
+        <Link to="/sales">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="pt-6 text-center">
+              <TrendingUp className="w-6 h-6 text-primary mx-auto mb-2" />
+              <p className="text-xs text-muted-foreground">오늘 매출 목표</p>
+              <p className="text-lg font-bold mt-1">₩{briefingData.salesTarget.today.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/reports">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="pt-6 text-center">
+              <MessageSquare className="w-6 h-6 text-destructive mx-auto mb-2" />
+              <p className="text-xs text-muted-foreground">미해결 이슈</p>
+              <p className="text-lg font-bold mt-1">{briefingData.unresolvedIssues}건</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

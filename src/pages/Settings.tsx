@@ -8,10 +8,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings as SettingsIcon, Store, Plug, Info } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
+import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { data: profile } = useEmployeeProfile();
   const isManager = useIsManager();
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => {
+      setSaving(false);
+      toast({ title: '저장 완료', description: '매장 정보가 저장되었습니다.' });
+    }, 800);
+  };
+
+  const handleTestConnection = (name: string) => {
+    toast({ title: '연결 테스트', description: `${name} 연동은 현재 MVP 버전에서 지원되지 않습니다. 추후 업데이트에서 지원 예정입니다.` });
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -40,16 +55,17 @@ const Settings = () => {
                 <div><Label>영업 시작</Label><Input type="time" defaultValue="11:00" disabled={!isManager} /></div>
                 <div><Label>영업 종료</Label><Input type="time" defaultValue="22:00" disabled={!isManager} /></div>
               </div>
-              {isManager && <Button className="w-full">저장</Button>}
+              {isManager && <Button className="w-full" onClick={handleSave} disabled={saving}>{saving ? '저장 중...' : '저장'}</Button>}
+              {!isManager && <p className="text-xs text-muted-foreground text-center">매니저 이상 권한이 필요합니다.</p>}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4 mt-4">
           {[
-            { name: 'POS 연동', desc: 'POS 시스템과 매출 데이터를 자동으로 동기화합니다', provider: 'POS 제공업체', status: 'inactive' },
-            { name: 'VAN 연동', desc: 'VAN 사를 통해 카드 승인 내역을 자동으로 가져옵니다', provider: 'VAN 제공업체', status: 'inactive' },
-            { name: '예약 플랫폼 연동', desc: '캐치테이블 등 외부 예약 플랫폼과 연동합니다', provider: '예약 플랫폼', status: 'inactive' },
+            { name: 'POS 연동', desc: 'POS 시스템과 매출 데이터를 자동으로 동기화합니다', provider: 'POS 제공업체' },
+            { name: 'VAN 연동', desc: 'VAN 사를 통해 카드 승인 내역을 자동으로 가져옵니다', provider: 'VAN 제공업체' },
+            { name: '예약 플랫폼 연동', desc: '캐치테이블 등 외부 예약 플랫폼과 연동합니다', provider: '예약 플랫폼' },
           ].map((integration) => (
             <Card key={integration.name}>
               <CardHeader>
@@ -65,6 +81,9 @@ const Settings = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>API Key</Label><Input placeholder="sk_..." disabled /></div>
                   <div><Label>Secret Key</Label><Input type="password" placeholder="••••" disabled /></div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => handleTestConnection(integration.name)}>연결 테스트</Button>
                 </div>
                 <div className="p-3 bg-muted rounded-lg flex items-start gap-2">
                   <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
