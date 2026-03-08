@@ -23,6 +23,7 @@ interface Props {
 export default function BulkRegistrationForm({ storeId, existingShifts, onDone }: Props) {
   const { data: employees = [] } = useStoreEmployees(storeId);
   const createShift = useCreateShift();
+  const deleteConflicts = useDeleteConflictingShifts();
   const { toast } = useToast();
 
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
