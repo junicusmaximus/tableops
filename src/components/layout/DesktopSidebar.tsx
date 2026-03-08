@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Users, Calendar, ClipboardCheck, FileText,
   TrendingUp, MessageSquare, Settings, ChefHat, LogOut,
   Clock, CalendarDays, BookOpen, Coffee, Briefcase,
-  AlertTriangle, ShoppingCart, Upload, Gift, Notebook, CalendarCog
+  AlertTriangle, ShoppingCart, Upload, Gift, Notebook, CalendarCog,
+  Brain, Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsManager, useCurrentRole } from '@/hooks/useUserRole';
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { to: '/work-stats', icon: TrendingUp, label: '근무 통계', group: '인사' },
   { to: '/schedule', icon: Calendar, label: '내 스케줄', group: '인사' },
   { to: '/schedule-management', icon: CalendarCog, label: '스케줄 관리', group: '인사', managerOnly: true },
+  { to: '/ai-schedule', icon: Sparkles, label: 'AI 스케줄 추천', group: '인사', managerOnly: true },
   { to: '/leave', icon: Briefcase, label: '휴가 관리', group: '인사' },
   { to: '/staff', icon: Users, label: '직원 관리', group: '운영', managerOnly: true },
   { to: '/checklists', icon: ClipboardCheck, label: '체크리스트', group: '운영' },
@@ -38,6 +40,7 @@ const navItems: NavItem[] = [
   { to: '/benefits', icon: Gift, label: '복리후생', group: '관리' },
   { to: '/glossary', icon: BookOpen, label: '용어/매뉴얼', group: '관리' },
   { to: '/chat', icon: MessageSquare, label: '채팅', group: '소통' },
+  { to: '/ai-report', icon: Brain, label: 'AI 매장 리포트', group: '운영', managerOnly: true },
 ];
 
 const DesktopSidebar = () => {

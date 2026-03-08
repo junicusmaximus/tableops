@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Calendar, ClipboardCheck, FileText, TrendingUp, Users,
   AlertTriangle, ShoppingCart, Briefcase, Upload, Gift,
-  BookOpen, Bell, Store, Settings, Coffee, Notebook
+  BookOpen, Bell, Store, Settings, Coffee, Notebook, Sparkles, Brain
 } from 'lucide-react';
 
 const menuItems = [
@@ -23,6 +23,8 @@ const menuItems = [
   { to: '/announcements', icon: Bell, label: '공지사항', color: 'text-info' },
   { to: '/staff', icon: Users, label: '직원 관리', color: 'text-success' },
   { to: '/stores', icon: Store, label: '매장 관리', color: 'text-success' },
+  { to: '/ai-schedule', icon: Sparkles, label: 'AI 스케줄', color: 'text-primary' },
+  { to: '/ai-report', icon: Brain, label: 'AI 리포트', color: 'text-primary' },
   { to: '/settings', icon: Settings, label: '설정', color: 'text-muted-foreground' },
 ];
 

@@ -33,6 +33,8 @@ import Settings from "@/pages/Settings";
 import MoreMenu from "@/pages/MoreMenu";
 import Stores from "@/pages/Stores";
 import WorkStats from "@/pages/WorkStats";
+import AIScheduleRecommend from "@/pages/AIScheduleRecommend";
+import AIStoreReport from "@/pages/AIStoreReport";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +99,8 @@ const App = () => (
               <Route path="more" element={<MoreMenu />} />
               <Route path="stores" element={<Stores />} />
               <Route path="work-stats" element={<WorkStats />} />
+              <Route path="ai-schedule" element={<AIScheduleRecommend />} />
+              <Route path="ai-report" element={<AIStoreReport />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
