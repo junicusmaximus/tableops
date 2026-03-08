@@ -32,6 +32,7 @@ import Announcements from "@/pages/Announcements";
 import Settings from "@/pages/Settings";
 import MoreMenu from "@/pages/MoreMenu";
 import Stores from "@/pages/Stores";
+import WorkStats from "@/pages/WorkStats";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
