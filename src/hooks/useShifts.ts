@@ -219,9 +219,12 @@ export const useCopyPreviousWeek = () => {
   return useMutation({
     mutationFn: async (targetWeekStart: Date) => {
       if (!user || !profile) throw new Error('인증이 필요합니다');
-      const prevStart = format(addDays(startOfWeek(targetWeekStart, { weekStartsOn: 1 }), -7), 'yyyy-MM-dd');
-      const prevEnd = format(addDays(endOfWeek(targetWeekStart, { weekStartsOn: 1 }), -7), 'yyyy-MM-dd');
       const targetStart = startOfWeek(targetWeekStart, { weekStartsOn: 1 });
+      const targetEnd = endOfWeek(targetWeekStart, { weekStartsOn: 1 });
+      const prevStart = format(addDays(targetStart, -7), 'yyyy-MM-dd');
+      const prevEnd = format(addDays(targetEnd, -7), 'yyyy-MM-dd');
+      const targetStartStr = format(targetStart, 'yyyy-MM-dd');
+      const targetEndStr = format(targetEnd, 'yyyy-MM-dd');
 
       const { data: prevShifts, error } = await supabase
         .from('shifts')
@@ -231,6 +234,15 @@ export const useCopyPreviousWeek = () => {
         .lte('shift_date', prevEnd);
       if (error) throw error;
       if (!prevShifts?.length) throw new Error('이전 주 스케줄이 없습니다');
+
+      // Delete existing shifts in the target week to prevent duplicates
+      const { error: deleteErr } = await supabase
+        .from('shifts')
+        .delete()
+        .eq('store_id', profile.store_id)
+        .gte('shift_date', targetStartStr)
+        .lte('shift_date', targetEndStr);
+      if (deleteErr) throw deleteErr;
 
       const newShifts = prevShifts.map((s: any) => {
         const dayOfWeek = new Date(s.shift_date).getDay();
