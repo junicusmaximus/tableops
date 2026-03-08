@@ -26,7 +26,7 @@ export const useLeaveRequests = () => {
 
   return useQuery({
     queryKey: ['leave-requests', profile?.store_id],
-    queryFn: async () => {
+    queryFn: async (): Promise<LeaveRequest[]> => {
       if (!profile?.store_id) return [];
       const { data, error } = await supabase
         .from('leave_requests')
@@ -35,9 +35,9 @@ export const useLeaveRequests = () => {
         .order('created_at', { ascending: false });
       if (error) throw error;
 
-      // Enrich with applicant names
-      const userIds = [...new Set((data ?? []).map(r => r.applicant_user_id))];
-      if (userIds.length === 0) return data ?? [];
+      const rows = data as any[] ?? [];
+      const userIds = [...new Set(rows.map(r => r.applicant_user_id))];
+      if (userIds.length === 0) return rows as LeaveRequest[];
 
       const { data: profiles } = await supabase
         .from('employee_profiles')
@@ -46,7 +46,7 @@ export const useLeaveRequests = () => {
 
       const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p]));
 
-      return (data ?? []).map(r => ({
+      return rows.map(r => ({
         ...r,
         applicant_name: profileMap.get(r.applicant_user_id)?.full_name ?? '알 수 없음',
         applicant_position: profileMap.get(r.applicant_user_id)?.position ?? '',
