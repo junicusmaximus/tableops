@@ -304,7 +304,7 @@ const Ingredients = () => {
               <DialogContent>
                 <DialogHeader><DialogTitle>원재료 입고 등록</DialogTitle></DialogHeader>
                 <div className="space-y-3 pt-2">
-                  <div><Label>식재료명 *</Label><Input value={rawForm.name} onChange={e => setRawForm({ ...rawForm, name: e.target.value })} placeholder="예: 닭가슴살" /></div>
+                  <div><Label>식재료명 *</Label><ItemAutocomplete storeId={null} value={rawForm.name} onChange={v => setRawForm({ ...rawForm, name: v })} typeFilter="raw" placeholder="식재료명, 약어코드로 검색..." allowQuickCreate={true} /></div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>카테고리</Label>
                       <Select value={rawForm.category} onValueChange={v => setRawForm({ ...rawForm, category: v })}>
