@@ -27,7 +27,7 @@ export const useNotifications = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(50) as any;
       if (error) throw error;
       return (data ?? []) as Notification[];
     },

@@ -28,7 +28,7 @@ export const useNotificationPreferences = () => {
         .from('notification_preferences')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .maybeSingle() as any;
       if (error) throw error;
       return data as NotificationPreference | null;
     },
