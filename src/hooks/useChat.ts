@@ -16,6 +16,14 @@ export interface ChatRoom {
   unread_count?: number;
 }
 
+export interface SenderProfile {
+  profile_image_url?: string | null;
+  position?: string | null;
+  phone?: string | null;
+  bio?: string | null;
+  status?: string | null;
+}
+
 export interface ChatMessage {
   id: string;
   room_id: string;
@@ -24,6 +32,7 @@ export interface ChatMessage {
   message_type: string;
   created_at: string;
   sender_name?: string;
+  sender_profile?: SenderProfile;
 }
 
 export const useChatRooms = () => {
