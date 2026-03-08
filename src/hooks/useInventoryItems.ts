@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,7 +33,7 @@ export function useInventoryItems(storeId: string | null) {
   const fetchItems = useCallback(async () => {
     if (!storeId) return;
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('inventory_items')
       .select('*')
       .eq('store_id', storeId)
@@ -42,7 +42,7 @@ export function useInventoryItems(storeId: string | null) {
     if (error) {
       console.error('Failed to fetch inventory items', error);
     } else {
-      setItems((data as unknown as InventoryItem[]) || []);
+      setItems((data as InventoryItem[]) || []);
     }
     setLoading(false);
   }, [storeId]);
@@ -52,8 +52,7 @@ export function useInventoryItems(storeId: string | null) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // User usage counts
-    const { data: uData } = await supabase
+    const { data: uData } = await (supabase as any)
       .from('item_usage_history')
       .select('item_id')
       .eq('user_id', user.id)
@@ -61,19 +60,18 @@ export function useInventoryItems(storeId: string | null) {
 
     if (uData) {
       const counts: Record<string, number> = {};
-      (uData as any[]).forEach(r => { counts[r.item_id] = (counts[r.item_id] || 0) + 1; });
+      (uData as any[]).forEach((r: any) => { counts[r.item_id] = (counts[r.item_id] || 0) + 1; });
       setUserUsage(Object.entries(counts).map(([item_id, count]) => ({ item_id, count })));
     }
 
-    // Store usage counts
-    const { data: sData } = await supabase
+    const { data: sData } = await (supabase as any)
       .from('item_usage_history')
       .select('item_id')
       .eq('store_id', storeId);
 
     if (sData) {
       const counts: Record<string, number> = {};
-      (sData as any[]).forEach(r => { counts[r.item_id] = (counts[r.item_id] || 0) + 1; });
+      (sData as any[]).forEach((r: any) => { counts[r.item_id] = (counts[r.item_id] || 0) + 1; });
       setStoreUsage(Object.entries(counts).map(([item_id, count]) => ({ item_id, count })));
     }
   }, [storeId]);
@@ -87,13 +85,12 @@ export function useInventoryItems(storeId: string | null) {
     if (!storeId) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from('item_usage_history').insert({
+    await (supabase as any).from('item_usage_history').insert({
       user_id: user.id,
       store_id: storeId,
       item_id: itemId,
       query_text: queryText,
-    } as any);
-    // Update local usage
+    });
     setUserUsage(prev => {
       const existing = prev.find(u => u.item_id === itemId);
       if (existing) return prev.map(u => u.item_id === itemId ? { ...u, count: u.count + 1 } : u);
@@ -102,9 +99,9 @@ export function useInventoryItems(storeId: string | null) {
   }, [storeId]);
 
   const createItem = useCallback(async (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'is_active'>) => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('inventory_items')
-      .insert(item as any)
+      .insert(item)
       .select()
       .single();
     if (error) {
@@ -113,13 +110,13 @@ export function useInventoryItems(storeId: string | null) {
     }
     toast({ title: '등록 완료', description: `${item.item_name} 품목이 등록되었습니다.` });
     await fetchItems();
-    return data as unknown as InventoryItem;
+    return data as InventoryItem;
   }, [toast, fetchItems]);
 
   const updateItem = useCallback(async (id: string, updates: Partial<InventoryItem>) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('inventory_items')
-      .update(updates as any)
+      .update(updates)
       .eq('id', id);
     if (error) {
       toast({ title: '수정 실패', description: error.message, variant: 'destructive' });
@@ -130,12 +127,11 @@ export function useInventoryItems(storeId: string | null) {
     return true;
   }, [toast, fetchItems]);
 
-  // Smart search with ranking
   const searchItems = useCallback((query: string, typeFilter?: 'raw' | 'prep'): InventoryItem[] => {
     if (!query.trim()) return typeFilter ? items.filter(i => i.item_type === typeFilter) : items;
 
     const q = query.toLowerCase().trim();
-    const filtered = (typeFilter ? items.filter(i => i.item_type === typeFilter) : items);
+    const filtered = typeFilter ? items.filter(i => i.item_type === typeFilter) : items;
 
     type Scored = { item: InventoryItem; score: number };
     const scored: Scored[] = [];
@@ -147,25 +143,18 @@ export function useInventoryItems(storeId: string | null) {
       const eng = (item.english_name || '').toLowerCase();
       const aliases = (item.aliases || []).map(a => a.toLowerCase());
 
-      // 1. Exact shorthand match
       if (code === q) { score = 100; }
-      // 2. Shorthand prefix match
       else if (code && code.startsWith(q)) { score = 90; }
-      // 3. Korean name match
       else if (name.includes(q)) { score = 70 + (name.startsWith(q) ? 10 : 0); }
-      // 4. English name match
       else if (eng && eng.includes(q)) { score = 60 + (eng.startsWith(q) ? 10 : 0); }
-      // 5. Alias match
       else {
         const aliasMatch = aliases.some(a => a.includes(q));
         if (aliasMatch) score = 50;
       }
 
       if (score > 0) {
-        // Boost by user usage
         const uUsage = userUsage.find(u => u.item_id === item.id);
         if (uUsage) score += Math.min(uUsage.count * 2, 20);
-        // Boost by store usage
         const sUsage = storeUsage.find(u => u.item_id === item.id);
         if (sUsage) score += Math.min(sUsage.count, 10);
         scored.push({ item, score });

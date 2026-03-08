@@ -464,6 +464,104 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          aliases: string[] | null
+          category: string
+          created_at: string
+          created_by: string
+          default_unit: string | null
+          english_name: string | null
+          id: string
+          is_active: boolean
+          item_name: string
+          item_type: string
+          short_code: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          aliases?: string[] | null
+          category?: string
+          created_at?: string
+          created_by: string
+          default_unit?: string | null
+          english_name?: string | null
+          id?: string
+          is_active?: boolean
+          item_name: string
+          item_type?: string
+          short_code?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          aliases?: string[] | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          default_unit?: string | null
+          english_name?: string | null
+          id?: string
+          is_active?: boolean
+          item_name?: string
+          item_type?: string
+          short_code?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_usage_history: {
+        Row: {
+          id: string
+          item_id: string
+          query_text: string | null
+          selected_at: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          query_text?: string | null
+          selected_at?: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          query_text?: string | null
+          selected_at?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_usage_history_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_usage_history_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
