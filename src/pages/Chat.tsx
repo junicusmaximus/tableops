@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Users, Plus, MessageSquare, Hash, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatRooms, useChatMessages, useSendMessage, useMarkAsRead, useCreateChatRoom } from '@/hooks/useChat';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { toast } from 'sonner';
+import RoleBadge from '@/components/common/RoleBadge';
+import ProfileCard from '@/components/profile/ProfileCard';
+import StatusIndicator from '@/components/profile/StatusIndicator';
 
 const formatMessageTime = (dateStr: string) => {
   const d = new Date(dateStr);
@@ -40,12 +44,10 @@ const Chat = () => {
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Mark as read when selecting room
   useEffect(() => {
     if (selectedRoomId) {
       markAsRead(selectedRoomId);
@@ -86,7 +88,6 @@ const Chat = () => {
     }
   };
 
-  // Room list panel
   const RoomList = () => (
     <Card className="overflow-hidden h-full flex flex-col">
       <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
@@ -165,7 +166,6 @@ const Chat = () => {
     </Card>
   );
 
-  // Messages panel
   const MessagesPanel = () => (
     <Card className="flex flex-col overflow-hidden h-full">
       <CardHeader className="pb-3 border-b border-border flex-row items-center gap-2 space-y-0">
@@ -202,25 +202,71 @@ const Chat = () => {
                 );
               }
 
+              const senderProfile = msg.sender_profile as any;
+
               return (
                 <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] ${isMine ? 'order-1' : ''}`}>
+                  <div className={`max-w-[75%] flex gap-2 ${isMine ? 'flex-row-reverse' : ''}`}>
+                    {/* Avatar for other users */}
                     {!isMine && (
-                      <p className="text-xs text-muted-foreground mb-1 ml-1">{msg.sender_name}</p>
-                    )}
-                    <div className={`flex items-end gap-1 ${isMine ? 'flex-row-reverse' : ''}`}>
-                      <div
-                        className={`px-3 py-2 rounded-2xl text-sm ${
-                          isMine
-                            ? 'bg-primary text-primary-foreground rounded-br-md'
-                            : 'bg-muted rounded-bl-md'
-                        }`}
+                      <ProfileCard
+                        name={msg.sender_name ?? '알 수 없음'}
+                        role={senderProfile?.position}
+                        imageUrl={senderProfile?.profile_image_url}
+                        phone={senderProfile?.phone}
+                        bio={senderProfile?.bio}
+                        status={senderProfile?.status}
                       >
-                        {msg.content}
+                        <button className="shrink-0 mt-1 cursor-pointer">
+                          <div className="relative">
+                            <Avatar className="w-8 h-8 border border-border">
+                              <AvatarImage src={senderProfile?.profile_image_url ?? undefined} className="object-cover" />
+                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                {(msg.sender_name ?? '?').slice(0, 1)}
+                              </AvatarFallback>
+                            </Avatar>
+                            {senderProfile?.status && senderProfile.status !== 'offline' && (
+                              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background" style={{
+                                backgroundColor: senderProfile.status === 'working' ? '#22c55e' : senderProfile.status === 'vacation' ? '#eab308' : '#f97316'
+                              }} />
+                            )}
+                          </div>
+                        </button>
+                      </ProfileCard>
+                    )}
+
+                    <div>
+                      {!isMine && (
+                        <div className="flex items-center gap-1.5 mb-1 ml-1">
+                          <ProfileCard
+                            name={msg.sender_name ?? '알 수 없음'}
+                            role={senderProfile?.position}
+                            imageUrl={senderProfile?.profile_image_url}
+                            phone={senderProfile?.phone}
+                            bio={senderProfile?.bio}
+                            status={senderProfile?.status}
+                          >
+                            <button className="text-xs font-medium hover:underline cursor-pointer">
+                              {msg.sender_name}
+                            </button>
+                          </ProfileCard>
+                          <RoleBadge role={senderProfile?.position} className="text-[9px] px-1.5 py-0" />
+                        </div>
+                      )}
+                      <div className={`flex items-end gap-1 ${isMine ? 'flex-row-reverse' : ''}`}>
+                        <div
+                          className={`px-3 py-2 rounded-2xl text-sm ${
+                            isMine
+                              ? 'bg-primary text-primary-foreground rounded-br-md'
+                              : 'bg-muted rounded-bl-md'
+                          }`}
+                        >
+                          {msg.content}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {formatMessageTime(msg.created_at)}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground shrink-0">
-                        {formatMessageTime(msg.created_at)}
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -253,7 +299,6 @@ const Chat = () => {
     </Card>
   );
 
-  // Empty state for desktop when no room selected
   const EmptyChat = () => (
     <Card className="flex flex-col items-center justify-center h-full">
       <MessageSquare className="w-12 h-12 text-muted-foreground mb-3" />
@@ -267,13 +312,11 @@ const Chat = () => {
         <h1 className="text-2xl font-bold">채팅</h1>
       </div>
 
-      {/* Desktop layout */}
       <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-4 h-[calc(100%-3rem)]">
         <RoomList />
         {selectedRoomId ? <MessagesPanel /> : <EmptyChat />}
       </div>
 
-      {/* Mobile layout */}
       <div className="lg:hidden h-[calc(100%-3rem)]">
         {selectedRoomId ? <MessagesPanel /> : <RoomList />}
       </div>
