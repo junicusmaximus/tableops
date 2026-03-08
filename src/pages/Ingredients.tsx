@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/common/StatusBadge';
 import EmptyState from '@/components/common/EmptyState';
+import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
 import { Plus, Search, ChefHat, Package, AlertTriangle, CheckCircle, Clock, Trash2, Eye, Edit, MinusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
