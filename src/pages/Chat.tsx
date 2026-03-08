@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Users, Plus, MessageSquare, Hash, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -92,29 +92,9 @@ const Chat = () => {
     <Card className="overflow-hidden h-full flex flex-col">
       <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">채팅방</CardTitle>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Plus className="w-4 h-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>새 채팅방 만들기</DialogTitle>
-            </DialogHeader>
-            <div className="flex gap-2 mt-2">
-              <Input
-                placeholder="채팅방 이름"
-                value={newRoomName}
-                onChange={(e) => setNewRoomName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateRoom()}
-              />
-              <Button onClick={handleCreateRoom} disabled={createRoom.isPending}>
-                만들기
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDialogOpen(true)}>
+          <Plus className="w-4 h-4" />
+        </Button>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-auto">
         {roomsLoading ? (
@@ -320,6 +300,25 @@ const Chat = () => {
       <div className="lg:hidden h-[calc(100%-3rem)]">
         {selectedRoomId ? messagesPanel : roomList}
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>새 채팅방 만들기</DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-2 mt-2">
+            <Input
+              placeholder="채팅방 이름"
+              value={newRoomName}
+              onChange={(e) => setNewRoomName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateRoom()}
+            />
+            <Button onClick={handleCreateRoom} disabled={createRoom.isPending}>
+              만들기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
