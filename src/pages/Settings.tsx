@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone } from 'lucide-react';
+import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone, User } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
 import { useNotificationPreferences, useUpdateNotificationPreferences, type NotifPrefField } from '@/hooks/useNotificationPreferences';
+import ProfileSettings from '@/components/profile/ProfileSettings';
 
 const Settings = () => {
   const { data: profile } = useEmployeeProfile();
