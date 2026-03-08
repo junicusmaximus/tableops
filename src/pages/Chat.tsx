@@ -300,6 +300,25 @@ const Chat = () => {
       <div className="lg:hidden h-[calc(100%-3rem)]">
         {selectedRoomId ? messagesPanel : roomList}
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>새 채팅방 만들기</DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-2 mt-2">
+            <Input
+              placeholder="채팅방 이름"
+              value={newRoomName}
+              onChange={(e) => setNewRoomName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateRoom()}
+            />
+            <Button onClick={handleCreateRoom} disabled={createRoom.isPending}>
+              만들기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
