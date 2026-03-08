@@ -44,7 +44,7 @@ interface AIReport {
 }
 
 const TrendIcon = ({ trend }: { trend?: string }) => {
-  if (trend === 'up') return <TrendingUp className="w-4 h-4 text-emerald-500" />;
+  if (trend === 'up') return <TrendingUp className="w-4 h-4 text-primary" />;
   if (trend === 'down') return <TrendingDown className="w-4 h-4 text-destructive" />;
   return <Minus className="w-4 h-4 text-muted-foreground" />;
 };

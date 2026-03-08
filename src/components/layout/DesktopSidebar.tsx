@@ -40,6 +40,7 @@ const navItems: NavItem[] = [
   { to: '/benefits', icon: Gift, label: '복리후생', group: '관리' },
   { to: '/glossary', icon: BookOpen, label: '용어/매뉴얼', group: '관리' },
   { to: '/chat', icon: MessageSquare, label: '채팅', group: '소통' },
+  { to: '/ai-report', icon: Brain, label: 'AI 매장 리포트', group: '운영', managerOnly: true },
 ];
 
 const DesktopSidebar = () => {

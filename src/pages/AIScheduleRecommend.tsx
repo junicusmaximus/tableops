@@ -178,7 +178,6 @@ const AIScheduleRecommend = () => {
 
           const shift = day.shifts[i];
           await createShift.mutateAsync({
-            store_id: profile.store_id,
             shift_date: day.date,
             user_id: shift.user_id,
             start_time: shift.start_time,
