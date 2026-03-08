@@ -562,6 +562,125 @@ export type Database = {
           },
         ]
       }
+      leave_requests: {
+        Row: {
+          applicant_user_id: string
+          approver_user_id: string | null
+          created_at: string
+          end_date: string
+          id: string
+          leave_type: string
+          reason: string | null
+          rejection_reason: string | null
+          start_date: string
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_user_id: string
+          approver_user_id?: string | null
+          created_at?: string
+          end_date: string
+          id?: string
+          leave_type?: string
+          reason?: string | null
+          rejection_reason?: string | null
+          start_date: string
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_user_id?: string
+          approver_user_id?: string | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          leave_type?: string
+          reason?: string | null
+          rejection_reason?: string | null
+          start_date?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          enable_all: boolean
+          enable_leave_request: boolean
+          enable_leave_result: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          enable_all?: boolean
+          enable_leave_request?: boolean
+          enable_leave_result?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          enable_all?: boolean
+          enable_leave_request?: boolean
+          enable_leave_result?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_read: boolean
+          message: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organizations: {
         Row: {
           created_at: string
