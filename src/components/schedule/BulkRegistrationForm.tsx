@@ -71,6 +71,11 @@ export default function BulkRegistrationForm({ storeId, existingShifts, onDone }
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Delete conflicting shifts first (overwrite)
+      if (conflicts.length > 0) {
+        const conflictEntries = conflicts.map(c => ({ user_id: c.uid, shift_date: c.date }));
+        await deleteConflicts(conflictEntries);
+      }
       for (const date of dates) {
         for (const uid of selectedUserIds) {
           await createShift.mutateAsync({
@@ -85,7 +90,7 @@ export default function BulkRegistrationForm({ storeId, existingShifts, onDone }
           });
         }
       }
-      toast({ title: `${totalEntries}건 스케줄 등록 완료` });
+      toast({ title: `${totalEntries}건 스케줄 등록 완료`, description: conflicts.length > 0 ? `${conflicts.length}건 중복 덮어쓰기됨` : undefined });
       onDone();
     } catch (e: any) {
       toast({ title: '등록 실패', description: e.message, variant: 'destructive' });
