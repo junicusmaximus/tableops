@@ -399,6 +399,7 @@ export type Database = {
       }
       employee_profiles: {
         Row: {
+          bio: string | null
           brand_id: string
           created_at: string
           employment_type: string | null
@@ -408,11 +409,14 @@ export type Database = {
           organization_id: string
           phone: string | null
           position: string | null
+          profile_image_url: string | null
+          status: string
           store_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          bio?: string | null
           brand_id: string
           created_at?: string
           employment_type?: string | null
@@ -422,11 +426,14 @@ export type Database = {
           organization_id: string
           phone?: string | null
           position?: string | null
+          profile_image_url?: string | null
+          status?: string
           store_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          bio?: string | null
           brand_id?: string
           created_at?: string
           employment_type?: string | null
@@ -436,6 +443,8 @@ export type Database = {
           organization_id?: string
           phone?: string | null
           position?: string | null
+          profile_image_url?: string | null
+          status?: string
           store_id?: string
           updated_at?: string
           user_id?: string
