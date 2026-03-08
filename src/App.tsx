@@ -13,7 +13,8 @@ import Dashboard from "@/pages/Dashboard";
 import TodayBriefing from "@/pages/TodayBriefing";
 import StaffManagement from "@/pages/StaffManagement";
 import Attendance from "@/pages/Attendance";
-import ShiftSchedule from "@/pages/ShiftSchedule";
+import MySchedule from "@/pages/MySchedule";
+import ScheduleManagement from "@/pages/ScheduleManagement";
 import Leave from "@/pages/Leave";
 import Checklists from "@/pages/Checklists";
 import Chat from "@/pages/Chat";
@@ -74,7 +75,8 @@ const App = () => (
               <Route path="today-briefing" element={<TodayBriefing />} />
               <Route path="staff" element={<StaffManagement />} />
               <Route path="attendance" element={<Attendance />} />
-              <Route path="schedule" element={<ShiftSchedule />} />
+              <Route path="schedule" element={<MySchedule />} />
+              <Route path="schedule-management" element={<ScheduleManagement />} />
               <Route path="leave" element={<Leave />} />
               <Route path="checklists" element={<Checklists />} />
               <Route path="chat" element={<Chat />} />

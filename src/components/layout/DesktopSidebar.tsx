@@ -3,9 +3,10 @@ import {
   LayoutDashboard, Users, Calendar, ClipboardCheck, FileText,
   TrendingUp, MessageSquare, Settings, ChefHat, LogOut,
   Clock, CalendarDays, BookOpen, Coffee, Briefcase,
-  AlertTriangle, ShoppingCart, Upload, Gift, Notebook
+  AlertTriangle, ShoppingCart, Upload, Gift, Notebook, CalendarCog
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsManager } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -14,13 +15,15 @@ interface NavItem {
   icon: React.ElementType;
   label: string;
   group: string;
+  managerOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: '대시보드', group: '메인' },
   { to: '/today-briefing', icon: Coffee, label: '오늘의 브리핑', group: '메인' },
   { to: '/attendance', icon: Clock, label: '출퇴근 관리', group: '인사' },
-  { to: '/schedule', icon: Calendar, label: '스케줄 관리', group: '인사' },
+  { to: '/schedule', icon: Calendar, label: '내 스케줄', group: '인사' },
+  { to: '/schedule-management', icon: CalendarCog, label: '스케줄 관리', group: '인사', managerOnly: true },
   { to: '/leave', icon: Briefcase, label: '휴가 관리', group: '인사' },
   { to: '/checklists', icon: ClipboardCheck, label: '체크리스트', group: '운영' },
   { to: '/reports', icon: FileText, label: '일지/보고서', group: '운영' },
@@ -37,8 +40,11 @@ const navItems: NavItem[] = [
 const DesktopSidebar = () => {
   const { signOut } = useAuth();
   const location = useLocation();
+  const isManager = useIsManager();
 
-  const groups = navItems.reduce((acc, item) => {
+  const visibleItems = navItems.filter((item) => !item.managerOnly || isManager);
+
+  const groups = visibleItems.reduce((acc, item) => {
     if (!acc[item.group]) acc[item.group] = [];
     acc[item.group].push(item);
     return acc;

@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings as SettingsIcon, Store, Plug, Info } from 'lucide-react';
+import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
@@ -62,38 +62,48 @@ const Settings = () => {
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4 mt-4">
-          {[
-            { name: 'POS 연동', desc: 'POS 시스템과 매출 데이터를 자동으로 동기화합니다', provider: 'POS 제공업체' },
-            { name: 'VAN 연동', desc: 'VAN 사를 통해 카드 승인 내역을 자동으로 가져옵니다', provider: 'VAN 제공업체' },
-            { name: '예약 플랫폼 연동', desc: '캐치테이블 등 외부 예약 플랫폼과 연동합니다', provider: '예약 플랫폼' },
-          ].map((integration) => (
-            <Card key={integration.name}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{integration.name}</CardTitle>
-                  <Badge variant="outline" className="text-xs">미연동</Badge>
-                </div>
-                <CardDescription>{integration.desc}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div><Label>{integration.provider} 이름</Label><Input placeholder="예: 키오스크 프로" disabled /></div>
-                <div><Label>API Base URL</Label><Input placeholder="https://api.example.com" disabled /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>API Key</Label><Input placeholder="sk_..." disabled /></div>
-                  <div><Label>Secret Key</Label><Input type="password" placeholder="••••" disabled /></div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => handleTestConnection(integration.name)}>연결 테스트</Button>
-                </div>
-                <div className="p-3 bg-muted rounded-lg flex items-start gap-2">
-                  <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <p className="text-xs text-muted-foreground">
-                    현재 MVP 버전에서는 수동 입력 및 CSV 업로드를 지원합니다. API 연동은 추후 업데이트에서 지원됩니다.
-                  </p>
-                </div>
+          {!isManager ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <ShieldAlert className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+                <p className="text-base font-medium text-foreground">관리자 직급 이상부터 사용 가능한 영역입니다.</p>
+                <p className="text-sm text-muted-foreground mt-2">대표, 사장님, 매니저 권한이 필요합니다.</p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            [
+              { name: 'POS 연동', desc: 'POS 시스템과 매출 데이터를 자동으로 동기화합니다', provider: 'POS 제공업체' },
+              { name: 'VAN 연동', desc: 'VAN 사를 통해 카드 승인 내역을 자동으로 가져옵니다', provider: 'VAN 제공업체' },
+              { name: '예약 플랫폼 연동', desc: '캐치테이블 등 외부 예약 플랫폼과 연동합니다', provider: '예약 플랫폼' },
+            ].map((integration) => (
+              <Card key={integration.name}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">{integration.name}</CardTitle>
+                    <Badge variant="outline" className="text-xs">미연동</Badge>
+                  </div>
+                  <CardDescription>{integration.desc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div><Label>{integration.provider} 이름</Label><Input placeholder="예: 키오스크 프로" disabled /></div>
+                  <div><Label>API Base URL</Label><Input placeholder="https://api.example.com" disabled /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>API Key</Label><Input placeholder="sk_..." disabled /></div>
+                    <div><Label>Secret Key</Label><Input type="password" placeholder="••••" disabled /></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => handleTestConnection(integration.name)}>연결 테스트</Button>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg flex items-start gap-2">
+                    <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      현재 MVP 버전에서는 수동 입력 및 CSV 업로드를 지원합니다. API 연동은 추후 업데이트에서 지원됩니다.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
       </Tabs>
     </div>
