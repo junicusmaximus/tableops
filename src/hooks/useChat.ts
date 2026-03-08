@@ -160,7 +160,7 @@ export const useChatMessages = (roomId: string | null) => {
 
       const profileMap = new Map<string, any>(profiles?.map((p: any) => [p.user_id, p]) ?? []);
 
-      // Get read counts: count how many users have read_at >= message.created_at
+      // Get read receipts with user profiles
       const { data: receipts } = await supabase
         .from('chat_read_receipts')
         .select('user_id, last_read_at')
@@ -168,12 +168,31 @@ export const useChatMessages = (roomId: string | null) => {
 
       const receiptList = receipts ?? [];
 
+      // Get profiles for all receipt users
+      const receiptUserIds = [...new Set(receiptList.map((r) => r.user_id))];
+      const allProfileIds = [...new Set([...senderIds, ...receiptUserIds])];
+      const { data: allProfiles } = await db
+        .from('employee_profiles')
+        .select('user_id, full_name, profile_image_url, position, phone, bio, status')
+        .in('user_id', allProfileIds);
+
+      const allProfileMap = new Map<string, any>(allProfiles?.map((p: any) => [p.user_id, p]) ?? []);
+
       return (messages ?? []).map((m: any) => {
-        const prof = profileMap.get(m.sender_id);
-        // Count users who have read this message (read_at >= message created_at)
-        const readCount = receiptList.filter(
-          (r) => r.user_id !== m.sender_id && new Date(r.last_read_at) >= new Date(m.created_at)
-        ).length;
+        const prof = allProfileMap.get(m.sender_id);
+        // Find users who have read this message
+        const readers = receiptList
+          .filter((r) => r.user_id !== m.sender_id && new Date(r.last_read_at) >= new Date(m.created_at))
+          .map((r) => {
+            const rProf = allProfileMap.get(r.user_id);
+            return {
+              user_id: r.user_id,
+              full_name: rProf?.full_name ?? '알 수 없음',
+              profile_image_url: rProf?.profile_image_url,
+              position: rProf?.position,
+              read_at: r.last_read_at,
+            } as ReadByUser;
+          });
 
         return {
           ...m,
@@ -185,7 +204,8 @@ export const useChatMessages = (roomId: string | null) => {
             bio: prof.bio,
             status: prof.status,
           } : undefined,
-          read_count: readCount,
+          read_count: readers.length,
+          read_by: readers,
         } as ChatMessage;
       });
     },
