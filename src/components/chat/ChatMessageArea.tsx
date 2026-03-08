@@ -3,7 +3,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Paperclip, Smile, ArrowLeft, Pin, Hash, Users, Search, X, Check, CheckCheck } from 'lucide-react';
+import { Send, Paperclip, Smile, ArrowLeft, Pin, Hash, Users, Search, X } from 'lucide-react';
+import ReadReceiptPopover from '@/components/chat/ReadReceiptPopover';
 import RoleBadge from '@/components/common/RoleBadge';
 import ProfileCard from '@/components/profile/ProfileCard';
 import MentionDropdown from '@/components/chat/MentionDropdown';
@@ -386,11 +387,11 @@ const ChatMessageArea = ({
                           )}
 
                           {/* Read receipt */}
-                          {isMine && (msg.read_count ?? 0) > 0 && (
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <CheckCheck className="w-3 h-3 text-primary" />
-                              <span className="text-[10px] text-muted-foreground">읽음 {msg.read_count}</span>
-                            </div>
+                          {isMine && (
+                            <ReadReceiptPopover
+                              readCount={msg.read_count ?? 0}
+                              readBy={msg.read_by ?? []}
+                            />
                           )}
                         </div>
 
