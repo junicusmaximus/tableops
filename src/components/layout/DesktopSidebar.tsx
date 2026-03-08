@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Users, Calendar, ClipboardCheck, FileText,
   TrendingUp, MessageSquare, Settings, ChefHat, LogOut,
   Clock, CalendarDays, BookOpen, Coffee, Briefcase,
-  AlertTriangle, ShoppingCart, Upload, Gift, Notebook, CalendarCog
+  AlertTriangle, ShoppingCart, Upload, Gift, Notebook, CalendarCog,
+  Brain, Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsManager, useCurrentRole } from '@/hooks/useUserRole';
