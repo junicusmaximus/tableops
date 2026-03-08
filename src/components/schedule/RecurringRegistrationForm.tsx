@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useCreateShift } from '@/hooks/useShifts';
+import { useCreateShift, useDeleteConflictingShifts } from '@/hooks/useShifts';
 import { useStoreEmployees } from '@/hooks/useEmployeeProfile';
 import { useToast } from '@/hooks/use-toast';
 import ShiftTemplateSelector from './ShiftTemplateSelector';
@@ -32,6 +32,7 @@ interface Props {
 export default function RecurringRegistrationForm({ storeId, existingShifts, onDone }: Props) {
   const { data: employees = [] } = useStoreEmployees(storeId);
   const createShift = useCreateShift();
+  const deleteConflicts = useDeleteConflictingShifts();
   const { toast } = useToast();
 
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -79,6 +80,10 @@ export default function RecurringRegistrationForm({ storeId, existingShifts, onD
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      if (conflicts.length > 0) {
+        const conflictEntries = conflicts.map(c => ({ user_id: c.uid, shift_date: c.date }));
+        await deleteConflicts(conflictEntries);
+      }
       for (const date of matchingDates) {
         for (const uid of selectedUserIds) {
           await createShift.mutateAsync({
@@ -93,7 +98,7 @@ export default function RecurringRegistrationForm({ storeId, existingShifts, onD
           });
         }
       }
-      toast({ title: `${totalEntries}건 반복 스케줄 등록 완료` });
+      toast({ title: `${totalEntries}건 반복 스케줄 등록 완료`, description: conflicts.length > 0 ? `${conflicts.length}건 중복 덮어쓰기됨` : undefined });
       onDone();
     } catch (e: any) {
       toast({ title: '등록 실패', description: e.message, variant: 'destructive' });
@@ -182,9 +187,12 @@ export default function RecurringRegistrationForm({ storeId, existingShifts, onD
               {startTime}~{endTime} / 휴게 {breakMinutes}분{role && ` / ${role}`}
             </p>
             {conflicts.length > 0 && (
-              <div className="flex items-center gap-1 text-xs text-destructive mt-1">
-                <AlertTriangle className="w-3 h-3" />
-                {conflicts.length}건의 중복 스케줄이 감지되었습니다
+              <div className="flex items-start gap-2 text-xs text-destructive mt-2 p-2 bg-destructive/10 rounded-md border border-destructive/20">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">{conflicts.length}건의 중복 스케줄이 감지되었습니다</p>
+                  <p className="text-destructive/80 mt-0.5">등록 시 기존 중복 스케줄을 덮어씁니다.</p>
+                </div>
               </div>
             )}
           </CardContent>
