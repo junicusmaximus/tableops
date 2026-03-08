@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useToast } from '@/hooks/use-toast';
-import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays } from 'date-fns';
 
 export interface Shift {
   id: string;
@@ -19,6 +19,46 @@ export interface Shift {
   employee_name?: string;
 }
 
+export const useMonthlyShifts = (month: Date, options?: { userOnly?: boolean }) => {
+  const { user } = useAuth();
+  const { data: profile } = useEmployeeProfile();
+  const start = format(startOfMonth(month), 'yyyy-MM-dd');
+  const end = format(endOfMonth(month), 'yyyy-MM-dd');
+
+  return useQuery({
+    queryKey: ['shifts-monthly', profile?.store_id, start, options?.userOnly ? user?.id : 'all'],
+    queryFn: async () => {
+      if (!profile?.store_id) return [];
+      let query = supabase
+        .from('shifts')
+        .select('*')
+        .eq('store_id', profile.store_id)
+        .gte('shift_date', start)
+        .lte('shift_date', end)
+        .order('start_time');
+
+      if (options?.userOnly && user) {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const userIds = [...new Set((data ?? []).map((s) => s.user_id))];
+      if (userIds.length === 0) return (data ?? []).map(s => ({ ...s, employee_name: '미지정' })) as Shift[];
+      const { data: employees } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name')
+        .eq('store_id', profile.store_id)
+        .in('user_id', userIds);
+      const nameMap = new Map((employees ?? []).map((e) => [e.user_id, e.full_name]));
+      return (data ?? []).map((s) => ({ ...s, employee_name: nameMap.get(s.user_id) ?? '미지정' })) as Shift[];
+    },
+    enabled: !!profile?.store_id,
+  });
+};
+
+// Keep weekly for backward compat
 export const useWeeklyShifts = (weekStart: Date) => {
   const { data: profile } = useEmployeeProfile();
   const start = format(startOfWeek(weekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -37,7 +77,6 @@ export const useWeeklyShifts = (weekStart: Date) => {
         .order('start_time');
       if (error) throw error;
 
-      // Get employee names
       const userIds = [...new Set((data ?? []).map((s) => s.user_id))];
       if (userIds.length === 0) return [];
       const { data: employees } = await supabase
@@ -84,10 +123,39 @@ export const useCreateShift = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shifts-monthly'] });
       toast({ title: '스케줄 등록 완료' });
     },
     onError: (e: Error) => {
       toast({ title: '등록 실패', description: e.message, variant: 'destructive' });
+    },
+  });
+};
+
+export const useUpdateShift = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ id, ...input }: {
+      id: string;
+      user_id?: string;
+      shift_date?: string;
+      start_time?: string;
+      end_time?: string;
+      break_minutes?: number;
+      role?: string;
+      notes?: string;
+    }) => {
+      const { error } = await supabase.from('shifts').update(input).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shifts-monthly'] });
+      toast({ title: '스케줄 수정 완료' });
+    },
+    onError: (e: Error) => {
+      toast({ title: '수정 실패', description: e.message, variant: 'destructive' });
     },
   });
 };
@@ -102,6 +170,7 @@ export const useDeleteShift = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shifts-monthly'] });
       toast({ title: '스케줄 삭제 완료' });
     },
   });
@@ -151,6 +220,7 @@ export const useCopyPreviousWeek = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shifts-monthly'] });
       toast({ title: '이전 주 스케줄이 복사되었습니다' });
     },
     onError: (e: Error) => {

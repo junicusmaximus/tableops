@@ -4,14 +4,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChefHat } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { SIGNUP_ROLES } from '@/hooks/useUserRole';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -19,6 +22,10 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!role) {
+      toast({ title: '직급을 선택해주세요', variant: 'destructive' });
+      return;
+    }
     setIsLoading(true);
     const { error } = await signUp(email, password, fullName);
     if (error) {
@@ -55,6 +62,19 @@ const Signup = () => {
               <div className="space-y-2">
                 <Label htmlFor="password">비밀번호</Label>
                 <Input id="password" type="password" placeholder="8자 이상 입력하세요" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+              </div>
+              <div className="space-y-2">
+                <Label>직급</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="직급 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SIGNUP_ROLES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? '가입 중...' : '회원가입'}
