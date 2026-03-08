@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useMonthlyShifts, useCreateShift, useUpdateShift, useDeleteShift, Shift } from '@/hooks/useShifts';
 import { useStoreEmployees, useEmployeeProfile } from '@/hooks/useEmployeeProfile';
-import { useIsManager, useCurrentRole, getRoleLabel } from '@/hooks/useUserRole';
-import RoleBadge from '@/components/common/RoleBadge';
+import { useIsManager } from '@/hooks/useUserRole';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,14 +11,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2, Calendar as CalIcon, Users, ShieldAlert, UserPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2, Calendar as CalIcon, Users, ShieldAlert, UserPlus, Layers, Repeat, Copy } from 'lucide-react';
 import {
   format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, isSameMonth, isSameDay, isToday,
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import ShiftTemplateSelector from '@/components/schedule/ShiftTemplateSelector';
+import BulkRegistrationForm from '@/components/schedule/BulkRegistrationForm';
+import RecurringRegistrationForm from '@/components/schedule/RecurringRegistrationForm';
+import CopyScheduleActions from '@/components/schedule/CopyScheduleActions';
+import type { ShiftTemplate } from '@/hooks/useShiftTemplates';
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일'];
 
@@ -37,6 +40,8 @@ const emptyForm = {
   notes: '',
 };
 
+type RegistrationMode = 'single' | 'bulk' | 'recurring';
+
 const ScheduleManagement = () => {
   const { user } = useAuth();
   const isManager = useIsManager();
@@ -44,6 +49,7 @@ const ScheduleManagement = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<RegistrationMode>('single');
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [filterEmployee, setFilterEmployee] = useState<string>('all');
@@ -56,7 +62,6 @@ const ScheduleManagement = () => {
   const updateShift = useUpdateShift();
   const deleteShift = useDeleteShift();
 
-  // If not manager, show blocked message
   if (!isManager) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
@@ -98,8 +103,9 @@ const ScheduleManagement = () => {
     setSheetOpen(true);
   };
 
-  const openCreateDialog = (date?: Date) => {
+  const openCreateDialog = (mode: RegistrationMode = 'single', date?: Date) => {
     setEditingShift(null);
+    setDialogMode(mode);
     setForm({
       ...emptyForm,
       shift_date: date ? format(date, 'yyyy-MM-dd') : '',
@@ -109,6 +115,7 @@ const ScheduleManagement = () => {
 
   const openEditDialog = (shift: Shift) => {
     setEditingShift(shift);
+    setDialogMode('single');
     const isManual = (shift as any).assignee_type === 'manual_entry';
     setForm({
       assignee_type: isManual ? 'manual_entry' : 'registered_user',
@@ -124,6 +131,16 @@ const ScheduleManagement = () => {
       notes: shift.notes ?? '',
     });
     setDialogOpen(true);
+  };
+
+  const handleTemplateSelect = (t: ShiftTemplate) => {
+    setForm((prev) => ({
+      ...prev,
+      start_time: t.start_time?.slice(0, 5) ?? '09:00',
+      end_time: t.end_time?.slice(0, 5) ?? '18:00',
+      break_minutes: String(t.break_minutes),
+      role: t.role ?? prev.role,
+    }));
   };
 
   const handleSubmit = async () => {
@@ -159,6 +176,24 @@ const ScheduleManagement = () => {
     setDeleteConfirmId(null);
   };
 
+  const handleDuplicateShift = async (shift: Shift) => {
+    try {
+      await createShift.mutateAsync({
+        user_id: shift.user_id,
+        shift_date: shift.shift_date,
+        start_time: shift.start_time,
+        end_time: shift.end_time,
+        break_minutes: shift.break_minutes,
+        role: shift.role,
+        notes: shift.notes,
+        assignee_type: shift.assignee_type ?? 'registered_user',
+        manual_name: shift.manual_name,
+        manual_role_label: shift.manual_role_label,
+        manual_phone: shift.manual_phone,
+      });
+    } catch {}
+  };
+
   const isPending = createShift.isPending || updateShift.isPending;
 
   const getShiftDisplayName = (s: any) => {
@@ -168,6 +203,7 @@ const ScheduleManagement = () => {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold">스케줄 관리</h1>
@@ -194,12 +230,28 @@ const ScheduleManagement = () => {
           <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
             <ChevronRight className="w-4 h-4" />
           </Button>
-          <Button size="sm" onClick={() => openCreateDialog()}>
-            <Plus className="w-4 h-4 mr-1" />등록
-          </Button>
         </div>
       </div>
 
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => openCreateDialog('single')}>
+          <Plus className="w-4 h-4 mr-1" />등록
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => openCreateDialog('bulk')}>
+          <Layers className="w-4 h-4 mr-1" />대량 등록
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => openCreateDialog('recurring')}>
+          <Repeat className="w-4 h-4 mr-1" />반복 등록
+        </Button>
+        <CopyScheduleActions
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          shiftsForSelectedDate={selectedShifts}
+        />
+      </div>
+
+      {/* Calendar */}
       <Card>
         <CardContent className="p-3">
           <div className="grid grid-cols-7 mb-1">
@@ -256,7 +308,7 @@ const ScheduleManagement = () => {
           <SheetHeader>
             <SheetTitle className="flex items-center justify-between">
               <span>{selectedDate ? format(selectedDate, 'M월 d일 (EEEE)', { locale: ko }) : ''}</span>
-              <Button size="sm" variant="outline" onClick={() => { setSheetOpen(false); openCreateDialog(selectedDate ?? undefined); }}>
+              <Button size="sm" variant="outline" onClick={() => { setSheetOpen(false); openCreateDialog('single', selectedDate ?? undefined); }}>
                 <Plus className="w-4 h-4 mr-1" />추가
               </Button>
             </SheetTitle>
@@ -266,7 +318,7 @@ const ScheduleManagement = () => {
               <div className="text-center py-12">
                 <CalIcon className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">등록된 스케줄이 없습니다</p>
-                <Button size="sm" variant="outline" className="mt-3" onClick={() => { setSheetOpen(false); openCreateDialog(selectedDate ?? undefined); }}>
+                <Button size="sm" variant="outline" className="mt-3" onClick={() => { setSheetOpen(false); openCreateDialog('single', selectedDate ?? undefined); }}>
                   스케줄 등록
                 </Button>
               </div>
@@ -282,6 +334,9 @@ const ScheduleManagement = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" title="복제" onClick={() => handleDuplicateShift(s)}>
+                          <Copy className="w-3.5 h-3.5" />
+                        </Button>
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setSheetOpen(false); openEditDialog(s); }}>
                           <Edit2 className="w-3.5 h-3.5" />
                         </Button>
@@ -318,70 +373,140 @@ const ScheduleManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Create/Edit Dialog */}
+      {/* Registration Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingShift ? '스케줄 수정' : '스케줄 등록'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-            {/* Assignee type tabs */}
-            <Tabs value={form.assignee_type} onValueChange={(v) => setForm({ ...form, assignee_type: v as any, user_id: '', manual_name: '' })}>
-              <TabsList className="w-full">
-                <TabsTrigger value="registered_user" className="flex-1">등록된 회원 선택</TabsTrigger>
-                <TabsTrigger value="manual_entry" className="flex-1">직접 입력</TabsTrigger>
+
+          {editingShift ? (
+            /* Edit mode - single form only */
+            <SingleFormContent
+              form={form}
+              setForm={setForm}
+              employees={employees}
+              onTemplateSelect={handleTemplateSelect}
+            />
+          ) : (
+            /* Create mode - tabs */
+            <Tabs value={dialogMode} onValueChange={(v) => setDialogMode(v as RegistrationMode)}>
+              <TabsList className="w-full grid grid-cols-3">
+                <TabsTrigger value="single">단일 등록</TabsTrigger>
+                <TabsTrigger value="bulk">대량 등록</TabsTrigger>
+                <TabsTrigger value="recurring">반복 등록</TabsTrigger>
               </TabsList>
-              <TabsContent value="registered_user" className="mt-3">
-                <div>
-                  <Label>직원</Label>
-                  <Select value={form.user_id} onValueChange={(v) => setForm({ ...form, user_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="직원 선택" /></SelectTrigger>
-                    <SelectContent>
-                      {employees.map((e) => (
-                        <SelectItem key={e.user_id} value={e.user_id}>
-                          {e.full_name} {e.position ? `(${e.position})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+
+              <TabsContent value="single" className="mt-4">
+                <SingleFormContent
+                  form={form}
+                  setForm={setForm}
+                  employees={employees}
+                  onTemplateSelect={handleTemplateSelect}
+                />
               </TabsContent>
-              <TabsContent value="manual_entry" className="mt-3 space-y-3">
-                <div><Label>이름 *</Label><Input value={form.manual_name} onChange={(e) => setForm({ ...form, manual_name: e.target.value })} placeholder="이름을 입력해주세요." /></div>
-                <div><Label>직급 / 분류</Label><Input value={form.manual_role_label} onChange={(e) => setForm({ ...form, manual_role_label: e.target.value })} placeholder="예: 파트타이머, 외부 도움" /></div>
-                <div><Label>연락처</Label><Input value={form.manual_phone} onChange={(e) => setForm({ ...form, manual_phone: e.target.value })} placeholder="010-0000-0000" /></div>
+
+              <TabsContent value="bulk" className="mt-4">
+                <BulkRegistrationForm
+                  storeId={profile?.store_id}
+                  existingShifts={shifts}
+                  onDone={() => { setDialogOpen(false); }}
+                />
+              </TabsContent>
+
+              <TabsContent value="recurring" className="mt-4">
+                <RecurringRegistrationForm
+                  storeId={profile?.store_id}
+                  existingShifts={shifts}
+                  onDone={() => { setDialogOpen(false); }}
+                />
               </TabsContent>
             </Tabs>
+          )}
 
-            <div><Label>날짜</Label><Input type="date" value={form.shift_date} onChange={(e) => setForm({ ...form, shift_date: e.target.value })} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>시작</Label><Input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
-              <div><Label>종료</Label><Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>휴게(분)</Label><Input type="number" value={form.break_minutes} onChange={(e) => setForm({ ...form, break_minutes: e.target.value })} /></div>
-              <div><Label>직무</Label><Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="홀, 주방 등" /></div>
-            </div>
-            <div><Label>메모</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>취소</Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={
-                isPending ||
-                !form.shift_date ||
-                (form.assignee_type === 'registered_user' && !form.user_id) ||
-                (form.assignee_type === 'manual_entry' && !form.manual_name.trim())
-              }
-            >
-              {isPending ? '처리 중...' : editingShift ? '수정' : '등록'}
-            </Button>
-          </DialogFooter>
+          {/* Footer only for single mode */}
+          {(dialogMode === 'single' || editingShift) && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>취소</Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={
+                  isPending ||
+                  !form.shift_date ||
+                  (form.assignee_type === 'registered_user' && !form.user_id) ||
+                  (form.assignee_type === 'manual_entry' && !form.manual_name.trim())
+                }
+              >
+                {isPending ? '처리 중...' : editingShift ? '수정' : '등록'}
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>
   );
 };
+
+/* Single registration form content (extracted for reuse in edit & create) */
+function SingleFormContent({
+  form,
+  setForm,
+  employees,
+  onTemplateSelect,
+}: {
+  form: typeof emptyForm;
+  setForm: (f: typeof emptyForm | ((prev: typeof emptyForm) => typeof emptyForm)) => void;
+  employees: Array<{ user_id: string; full_name: string; position: string | null }>;
+  onTemplateSelect: (t: ShiftTemplate) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Assignee type tabs */}
+      <Tabs value={form.assignee_type} onValueChange={(v) => setForm({ ...form, assignee_type: v as any, user_id: '', manual_name: '' })}>
+        <TabsList className="w-full">
+          <TabsTrigger value="registered_user" className="flex-1">등록된 회원 선택</TabsTrigger>
+          <TabsTrigger value="manual_entry" className="flex-1">직접 입력</TabsTrigger>
+        </TabsList>
+        <TabsContent value="registered_user" className="mt-3">
+          <div>
+            <Label>직원</Label>
+            <Select value={form.user_id} onValueChange={(v) => setForm({ ...form, user_id: v })}>
+              <SelectTrigger><SelectValue placeholder="직원 선택" /></SelectTrigger>
+              <SelectContent>
+                {employees.map((e) => (
+                  <SelectItem key={e.user_id} value={e.user_id}>
+                    {e.full_name} {e.position ? `(${e.position})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </TabsContent>
+        <TabsContent value="manual_entry" className="mt-3 space-y-3">
+          <div><Label>이름 *</Label><Input value={form.manual_name} onChange={(e) => setForm({ ...form, manual_name: e.target.value })} placeholder="이름을 입력해주세요." /></div>
+          <div><Label>직급 / 분류</Label><Input value={form.manual_role_label} onChange={(e) => setForm({ ...form, manual_role_label: e.target.value })} placeholder="예: 파트타이머, 외부 도움" /></div>
+          <div><Label>연락처</Label><Input value={form.manual_phone} onChange={(e) => setForm({ ...form, manual_phone: e.target.value })} placeholder="010-0000-0000" /></div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Template selector */}
+      <ShiftTemplateSelector
+        onSelect={onTemplateSelect}
+        currentValues={{ start_time: form.start_time, end_time: form.end_time, break_minutes: form.break_minutes, role: form.role }}
+      />
+
+      <div><Label>날짜</Label><Input type="date" value={form.shift_date} onChange={(e) => setForm({ ...form, shift_date: e.target.value })} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label>시작</Label><Input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
+        <div><Label>종료</Label><Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label>휴게(분)</Label><Input type="number" value={form.break_minutes} onChange={(e) => setForm({ ...form, break_minutes: e.target.value })} /></div>
+        <div><Label>직무</Label><Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="홀, 주방 등" /></div>
+      </div>
+      <div><Label>메모</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+    </div>
+  );
+}
 
 export default ScheduleManagement;
