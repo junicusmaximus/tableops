@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, X } from 'lucide-react';
+import { Search, Plus, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InventoryItem, useInventoryItems } from '@/hooks/useInventoryItems';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +18,6 @@ interface ItemAutocompleteProps {
   typeFilter?: 'raw' | 'prep';
   className?: string;
   allowQuickCreate?: boolean;
-  /** Use external hook instance to avoid duplicate fetches */
   inventoryHook?: ReturnType<typeof useInventoryItems>;
 }
 
@@ -41,34 +40,58 @@ export default function ItemAutocomplete({
   const [open, setOpen] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [qcForm, setQcForm] = useState({ item_name: '', short_code: '', english_name: '', aliases: '', category: '기타' });
+
+  // Local items for when storeId is null (demo mode)
+  const [localItems, setLocalItems] = useState<InventoryItem[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const results = searchItems(value, typeFilter);
+
+  // Also search local items
+  const localResults = value.trim() ? localItems.filter(item => {
+    const q = value.toLowerCase().trim();
+    if (typeFilter && item.item_type !== typeFilter) return false;
+    return item.item_name.toLowerCase().includes(q) ||
+      (item.short_code || '').toLowerCase().includes(q) ||
+      (item.english_name || '').toLowerCase().includes(q) ||
+      (item.aliases || []).some(a => a.toLowerCase().includes(q));
+  }) : (typeFilter ? localItems.filter(i => i.item_type === typeFilter) : localItems);
+
+  const allResults = [...results, ...localResults.filter(lr => !results.some(r => r.id === lr.id))];
   const showDropdown = open && value.trim().length > 0;
 
   const handleSelect = useCallback((item: InventoryItem) => {
     onChange(item.item_name);
     onSelect?.(item);
-    recordUsage(item.id, value);
+    if (storeId) recordUsage(item.id, value);
     setOpen(false);
-  }, [onChange, onSelect, recordUsage, value]);
+  }, [onChange, onSelect, recordUsage, value, storeId]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showDropdown) return;
+    if (!showDropdown) {
+      if (e.key === 'Enter' && allowQuickCreate && value.trim() && allResults.length === 0) {
+        e.preventDefault();
+        setQcForm({ ...qcForm, item_name: value, short_code: value.toUpperCase() });
+        setQuickCreateOpen(true);
+        setOpen(false);
+      }
+      return;
+    }
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIdx(prev => Math.min(prev + 1, results.length - 1));
+      setSelectedIdx(prev => Math.min(prev + 1, allResults.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIdx(prev => Math.max(prev - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (results[selectedIdx]) {
-        handleSelect(results[selectedIdx]);
+      if (allResults[selectedIdx]) {
+        handleSelect(allResults[selectedIdx]);
       }
     } else if (e.key === 'Escape') {
       setOpen(false);
@@ -79,7 +102,6 @@ export default function ItemAutocomplete({
     setSelectedIdx(0);
   }, [value]);
 
-  // Scroll selected item into view
   useEffect(() => {
     if (listRef.current) {
       const el = listRef.current.children[selectedIdx] as HTMLElement;
@@ -101,27 +123,77 @@ export default function ItemAutocomplete({
   };
 
   const handleQuickCreate = async () => {
-    if (!qcForm.item_name || !storeId) return;
-    const { data: { user } } = await (await import('@/integrations/supabase/client')).supabase.auth.getUser();
-    if (!user) return;
+    if (!qcForm.item_name) {
+      toast({ title: '입력 오류', description: '품목명을 입력해주세요.', variant: 'destructive' });
+      return;
+    }
 
-    const result = await createItem({
-      store_id: storeId,
-      item_name: qcForm.item_name,
-      english_name: qcForm.english_name || null,
-      short_code: qcForm.short_code || null,
-      aliases: qcForm.aliases ? qcForm.aliases.split(',').map(s => s.trim()).filter(Boolean) : [],
-      category: qcForm.category,
-      item_type: typeFilter || 'raw',
-      default_unit: 'kg',
-      created_by: user.id,
-    });
+    setSaving(true);
 
-    if (result) {
-      onChange(result.item_name);
-      onSelect?.(result);
+    // If storeId is available, try to save to DB
+    if (storeId) {
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast({ title: '오류', description: '로그인이 필요합니다.', variant: 'destructive' });
+          setSaving(false);
+          return;
+        }
+
+        const result = await createItem({
+          store_id: storeId,
+          item_name: qcForm.item_name,
+          english_name: qcForm.english_name || null,
+          short_code: qcForm.short_code || null,
+          aliases: qcForm.aliases ? qcForm.aliases.split(',').map(s => s.trim()).filter(Boolean) : [],
+          category: qcForm.category,
+          item_type: typeFilter || 'raw',
+          default_unit: 'kg',
+          created_by: user.id,
+        });
+
+        if (result) {
+          onChange(result.item_name);
+          onSelect?.(result);
+          setQuickCreateOpen(false);
+          setQcForm({ item_name: '', short_code: '', english_name: '', aliases: '', category: '기타' });
+        }
+      } catch {
+        toast({ title: '저장 실패', description: '다시 시도해주세요.', variant: 'destructive' });
+      }
+    } else {
+      // Local-only mode: create a local item for demo
+      const newItem: InventoryItem = {
+        id: `local-${Date.now()}`,
+        store_id: 'local',
+        item_name: qcForm.item_name,
+        english_name: qcForm.english_name || null,
+        short_code: qcForm.short_code || null,
+        aliases: qcForm.aliases ? qcForm.aliases.split(',').map(s => s.trim()).filter(Boolean) : [],
+        category: qcForm.category,
+        item_type: typeFilter || 'raw',
+        default_unit: 'kg',
+        is_active: true,
+        created_by: 'local',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setLocalItems(prev => [...prev, newItem]);
+      onChange(newItem.item_name);
+      onSelect?.(newItem);
       setQuickCreateOpen(false);
       setQcForm({ item_name: '', short_code: '', english_name: '', aliases: '', category: '기타' });
+      toast({ title: '등록 완료', description: `${newItem.item_name} 품목이 등록되었습니다.` });
+    }
+
+    setSaving(false);
+  };
+
+  const handleQuickCreateKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !saving) {
+      e.preventDefault();
+      handleQuickCreate();
     }
   };
 
@@ -141,7 +213,7 @@ export default function ItemAutocomplete({
         />
         {value && (
           <button
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
             onMouseDown={e => { e.preventDefault(); onChange(''); inputRef.current?.focus(); }}
           >
             <X className="w-4 h-4" />
@@ -151,14 +223,14 @@ export default function ItemAutocomplete({
 
       {showDropdown && (
         <div className="absolute z-50 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-64 overflow-y-auto" ref={listRef}>
-          {results.length === 0 ? (
+          {allResults.length === 0 ? (
             <div className="p-3 text-center">
               <p className="text-sm text-muted-foreground">검색 결과 없음</p>
               {allowQuickCreate && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-2 text-primary"
+                  className="mt-2 text-primary cursor-pointer"
                   onMouseDown={e => {
                     e.preventDefault();
                     setQcForm({ ...qcForm, item_name: value, short_code: value.toUpperCase() });
@@ -171,7 +243,7 @@ export default function ItemAutocomplete({
               )}
             </div>
           ) : (
-            results.map((item, idx) => (
+            allResults.map((item, idx) => (
               <div
                 key={item.id}
                 className={cn(
@@ -207,10 +279,10 @@ export default function ItemAutocomplete({
       <Dialog open={quickCreateOpen} onOpenChange={setQuickCreateOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>새 품목 / 약어 등록</DialogTitle></DialogHeader>
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-2" onKeyDown={handleQuickCreateKeyDown}>
             <div>
               <Label>품목명 *</Label>
-              <Input value={qcForm.item_name} onChange={e => setQcForm({ ...qcForm, item_name: e.target.value })} />
+              <Input value={qcForm.item_name} onChange={e => setQcForm({ ...qcForm, item_name: e.target.value })} placeholder="예: 마리네이드 양갈비" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -230,7 +302,9 @@ export default function ItemAutocomplete({
               <Label>카테고리</Label>
               <Input value={qcForm.category} onChange={e => setQcForm({ ...qcForm, category: e.target.value })} placeholder="예: 육류" />
             </div>
-            <Button onClick={handleQuickCreate} className="w-full">등록</Button>
+            <Button onClick={handleQuickCreate} className="w-full" disabled={saving || !qcForm.item_name}>
+              {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />등록 중...</> : '등록'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

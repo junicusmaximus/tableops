@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import EmptyState from '@/components/common/EmptyState';
-import { Plus, Bell } from 'lucide-react';
+import { Plus, Bell, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsManager } from '@/hooks/useUserRole';
 
@@ -36,6 +36,18 @@ const Announcements = () => {
     setAddOpen(false);
     setForm({ title: '', content: '', pinned: false });
     toast({ title: '공지 등록', description: '공지사항이 등록되었습니다.' });
+  };
+
+  const handleDelete = (id: number) => {
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+    setDetail(null);
+    toast({ title: '삭제 완료', description: '공지사항이 삭제되었습니다.' });
+  };
+
+  const handleTogglePin = (id: number) => {
+    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, pinned: !a.pinned } : a));
+    setDetail(prev => prev ? { ...prev, pinned: !prev.pinned } : null);
+    toast({ title: '변경 완료', description: '고정 상태가 변경되었습니다.' });
   };
 
   return (
@@ -77,6 +89,16 @@ const Announcements = () => {
               <div className="bg-muted/50 p-4 rounded-lg">
                 <p className="text-sm whitespace-pre-wrap">{detail.content}</p>
               </div>
+              {isManager && (
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => handleTogglePin(detail.id)}>
+                    {detail.pinned ? '고정 해제' : '📌 고정'}
+                  </Button>
+                  <Button variant="destructive" className="flex-1" onClick={() => handleDelete(detail.id)}>
+                    <Trash2 className="w-4 h-4 mr-2" />삭제
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </SheetContent>
@@ -84,7 +106,7 @@ const Announcements = () => {
 
       <div className="space-y-3">
         {announcements.length === 0 ? (
-          <EmptyState icon={Bell} title="공지사항이 없습니다" description="새 공지를 작성해 주세요." />
+          <EmptyState icon={Bell} title="공지사항이 없습니다" description="새 공지를 작성해 주세요." action={isManager ? <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="w-4 h-4 mr-1" />공지 작성</Button> : undefined} />
         ) : announcements.map((ann) => (
           <Card key={ann.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDetail(ann)}>
             <CardContent className="pt-4">
