@@ -537,18 +537,72 @@ export type Database = {
           },
         ]
       }
+      inventory_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_resolved: boolean
+          item_id: string
+          message: string
+          resolved_at: string | null
+          resolved_by: string | null
+          store_id: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean
+          item_id: string
+          message: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          store_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean
+          item_id?: string
+          message?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_alerts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_alerts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           aliases: string[] | null
           category: string
           created_at: string
           created_by: string
+          current_stock: number | null
           default_unit: string | null
           english_name: string | null
+          expiry_date: string | null
           id: string
           is_active: boolean
           item_name: string
           item_type: string
+          minimum_stock: number | null
           short_code: string | null
           store_id: string
           updated_at: string
@@ -558,12 +612,15 @@ export type Database = {
           category?: string
           created_at?: string
           created_by: string
+          current_stock?: number | null
           default_unit?: string | null
           english_name?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
           item_name: string
           item_type?: string
+          minimum_stock?: number | null
           short_code?: string | null
           store_id: string
           updated_at?: string
@@ -573,12 +630,15 @@ export type Database = {
           category?: string
           created_at?: string
           created_by?: string
+          current_stock?: number | null
           default_unit?: string | null
           english_name?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
           item_name?: string
           item_type?: string
+          minimum_stock?: number | null
           short_code?: string | null
           store_id?: string
           updated_at?: string
@@ -792,6 +852,69 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      purchase_requests: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          id: string
+          item_id: string | null
+          item_name: string
+          notes: string | null
+          quantity: number
+          requested_by: string
+          status: string
+          store_id: string
+          supplier: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_name: string
+          notes?: string | null
+          quantity?: number
+          requested_by: string
+          status?: string
+          store_id: string
+          supplier?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_name?: string
+          notes?: string | null
+          quantity?: number
+          requested_by?: string
+          status?: string
+          store_id?: string
+          supplier?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reservations: {
         Row: {
