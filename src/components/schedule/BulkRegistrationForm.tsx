@@ -152,7 +152,7 @@ export default function BulkRegistrationForm({ storeId, existingShifts, onDone }
               {startTime}~{endTime} / 휴게 {breakMinutes}분{role && ` / ${role}`}
             </p>
             {conflicts.length > 0 && (
-              <div className="flex items-center gap-1 text-xs text-amber-600 mt-1">
+              <div className="flex items-center gap-1 text-xs text-destructive mt-1">
                 <AlertTriangle className="w-3 h-3" />
                 {conflicts.length}건의 중복 스케줄이 감지되었습니다
               </div>

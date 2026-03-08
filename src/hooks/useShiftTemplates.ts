@@ -28,7 +28,7 @@ export const useShiftTemplates = () => {
         .eq('store_id', profile.store_id)
         .order('name');
       if (error) throw error;
-      return (data ?? []) as ShiftTemplate[];
+      return (data ?? []) as unknown as ShiftTemplate[];
     },
     enabled: !!profile?.store_id,
   });
