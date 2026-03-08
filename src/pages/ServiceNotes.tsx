@@ -151,7 +151,6 @@ const ServiceNotes = () => {
         placeholder="고객명, 내용 또는 품목 검색..."
         allowQuickCreate={false}
       />
-      </div>
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
