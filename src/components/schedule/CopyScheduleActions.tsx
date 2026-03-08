@@ -28,7 +28,8 @@ export default function CopyScheduleActions({ currentMonth, selectedDate, shifts
   const [isCopying, setIsCopying] = useState(false);
 
   const handleCopyPrevWeek = () => {
-    copyPrevWeek.mutate(currentMonth);
+    // Use today's date to determine the current week, not the month view date
+    copyPrevWeek.mutate(new Date());
   };
 
   const handleDuplicateShift = async (shift: Shift) => {
