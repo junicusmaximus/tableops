@@ -727,6 +727,53 @@ export type Database = {
           },
         ]
       }
+      shift_templates: {
+        Row: {
+          break_minutes: number
+          created_at: string
+          created_by: string
+          end_time: string
+          id: string
+          name: string
+          role: string | null
+          start_time: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          break_minutes?: number
+          created_at?: string
+          created_by: string
+          end_time: string
+          id?: string
+          name: string
+          role?: string | null
+          start_time: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          break_minutes?: number
+          created_at?: string
+          created_by?: string
+          end_time?: string
+          id?: string
+          name?: string
+          role?: string | null
+          start_time?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_templates_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shifts: {
         Row: {
           assignee_type: string
