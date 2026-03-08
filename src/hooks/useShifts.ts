@@ -172,6 +172,28 @@ export const useUpdateShift = () => {
   });
 };
 
+export const useDeleteConflictingShifts = () => {
+  const { data: profile } = useEmployeeProfile();
+  return async (entries: Array<{ user_id: string; shift_date: string }>) => {
+    if (!profile?.store_id || entries.length === 0) return;
+    // Group by date for efficient deletion
+    const dateUserMap = new Map<string, string[]>();
+    for (const e of entries) {
+      const list = dateUserMap.get(e.shift_date) || [];
+      list.push(e.user_id);
+      dateUserMap.set(e.shift_date, list);
+    }
+    for (const [date, userIds] of dateUserMap) {
+      await supabase
+        .from('shifts')
+        .delete()
+        .eq('store_id', profile.store_id)
+        .eq('shift_date', date)
+        .in('user_id', userIds);
+    }
+  };
+};
+
 export const useDeleteShift = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();

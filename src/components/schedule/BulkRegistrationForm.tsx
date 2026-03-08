@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { useCreateShift } from '@/hooks/useShifts';
+import { useCreateShift, useDeleteConflictingShifts } from '@/hooks/useShifts';
 import { useStoreEmployees } from '@/hooks/useEmployeeProfile';
 import { useToast } from '@/hooks/use-toast';
 import ShiftTemplateSelector from './ShiftTemplateSelector';
