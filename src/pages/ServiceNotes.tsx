@@ -144,9 +144,13 @@ const ServiceNotes = () => {
         ))}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="고객명 또는 내용 검색..." className="pl-9" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+      <ItemAutocomplete
+        storeId={null}
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="고객명, 내용 또는 품목 검색..."
+        allowQuickCreate={false}
+      />
       </div>
 
       <div className="space-y-3">
