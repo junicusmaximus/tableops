@@ -29,6 +29,7 @@ import Glossary from "@/pages/Glossary";
 import Announcements from "@/pages/Announcements";
 import Settings from "@/pages/Settings";
 import MoreMenu from "@/pages/MoreMenu";
+import Stores from "@/pages/Stores";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
