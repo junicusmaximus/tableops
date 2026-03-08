@@ -297,8 +297,7 @@ const Ingredients = () => {
           {/* toolbar */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="식재료명 또는 카테고리 검색..." className="pl-9" value={rawSearch} onChange={e => setRawSearch(e.target.value)} />
+              <ItemAutocomplete storeId={null} value={rawSearch} onChange={setRawSearch} typeFilter="raw" placeholder="식재료명, 약어코드, 카테고리 검색..." allowQuickCreate={false} />
             </div>
             <Dialog open={rawAddOpen} onOpenChange={setRawAddOpen}>
               <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" />입고 등록</Button></DialogTrigger>
