@@ -45,7 +45,7 @@ export const useShiftSwaps = () => {
       const shiftMap = new Map((shifts ?? []).map((s: any) => [s.id, s]));
 
       return (data ?? []).map((d: any) => {
-        const shift = shiftMap.get(d.shift_id);
+        const shift: any = shiftMap.get(d.shift_id);
         return {
           ...d,
           requester_name: nameMap.get(d.requester_id) ?? '알 수 없음',
