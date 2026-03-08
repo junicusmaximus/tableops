@@ -15,24 +15,26 @@ export interface Notification {
   created_by: string | null;
 }
 
+const db = supabase as any;
+
 export const useNotifications = () => {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: ['notifications', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Notification[]> => {
       if (!user) return [];
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50) as any;
+        .limit(50);
       if (error) throw error;
       return (data ?? []) as Notification[];
     },
     enabled: !!user,
-    refetchInterval: 15000, // Poll every 15 seconds
+    refetchInterval: 15000,
   });
 };
 
@@ -46,7 +48,7 @@ export const useMarkAsRead = () => {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await supabase
+      const { error } = await db
         .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
@@ -65,7 +67,7 @@ export const useMarkAllAsRead = () => {
   return useMutation({
     mutationFn: async () => {
       if (!user) return;
-      const { error } = await supabase
+      const { error } = await db
         .from('notifications')
         .update({ is_read: true })
         .eq('user_id', user.id)

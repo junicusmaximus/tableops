@@ -20,24 +20,26 @@ export interface LeaveRequest {
   applicant_position?: string;
 }
 
+// Helper to bypass type checking for new tables not yet in generated types
+const db = supabase as any;
+
 export const useLeaveRequests = () => {
-  const { user } = useAuth();
   const { data: profile } = useEmployeeProfile();
 
   return useQuery({
     queryKey: ['leave-requests', profile?.store_id],
     queryFn: async (): Promise<LeaveRequest[]> => {
       if (!profile?.store_id) return [];
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('leave_requests')
         .select('*')
         .eq('store_id', profile.store_id)
         .order('created_at', { ascending: false });
       if (error) throw error;
 
-      const rows = data as any[] ?? [];
-      const userIds = [...new Set(rows.map(r => r.applicant_user_id))];
-      if (userIds.length === 0) return rows as LeaveRequest[];
+      const rows = (data ?? []) as any[];
+      const userIds = [...new Set(rows.map((r: any) => r.applicant_user_id))];
+      if (userIds.length === 0) return rows;
 
       const { data: profiles } = await supabase
         .from('employee_profiles')
@@ -46,7 +48,7 @@ export const useLeaveRequests = () => {
 
       const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p]));
 
-      return rows.map(r => ({
+      return rows.map((r: any) => ({
         ...r,
         applicant_name: profileMap.get(r.applicant_user_id)?.full_name ?? '알 수 없음',
         applicant_position: profileMap.get(r.applicant_user_id)?.position ?? '',
@@ -65,8 +67,7 @@ export const useCreateLeaveRequest = () => {
     mutationFn: async (input: { leave_type: string; start_date: string; end_date: string; reason: string }) => {
       if (!user || !profile?.store_id) throw new Error('Not authenticated');
 
-      // Insert leave request
-      const { data: lr, error } = await supabase
+      const { data: lr, error } = await db
         .from('leave_requests')
         .insert({
           applicant_user_id: user.id,
@@ -88,22 +89,19 @@ export const useCreateLeaveRequest = () => {
         .eq('store_id', profile.store_id)
         .in('role', ['ceo', 'owner', 'boss', 'manager']);
 
-      // Check each manager's notification preferences
       const managerIds = (managers ?? []).map(m => m.user_id).filter(id => id !== user.id);
 
       if (managerIds.length > 0) {
-        // Get preferences for these managers
-        const { data: prefs } = await supabase
+        const { data: prefs } = await db
           .from('notification_preferences')
           .select('user_id, enable_all, enable_leave_request')
           .in('user_id', managerIds);
 
-        const prefMap = new Map((prefs ?? []).map(p => [p.user_id, p]));
+        const prefMap = new Map(((prefs ?? []) as any[]).map((p: any) => [p.user_id, p]));
 
         const notifications = managerIds
           .filter(mid => {
-            const pref = prefMap.get(mid);
-            // Default: enabled if no preference exists
+            const pref = prefMap.get(mid) as any;
             if (!pref) return true;
             return pref.enable_all !== false && pref.enable_leave_request !== false;
           })
@@ -118,7 +116,7 @@ export const useCreateLeaveRequest = () => {
           }));
 
         if (notifications.length > 0) {
-          await supabase.from('notifications').insert(notifications);
+          await db.from('notifications').insert(notifications);
         }
       }
 
@@ -138,7 +136,7 @@ export const useApproveLeaveRequest = () => {
     mutationFn: async (leaveId: string) => {
       if (!user) throw new Error('Not authenticated');
 
-      const { data: lr, error } = await supabase
+      const { data: lr, error } = await db
         .from('leave_requests')
         .update({ status: 'approved', approver_user_id: user.id, updated_at: new Date().toISOString() })
         .eq('id', leaveId)
@@ -146,8 +144,7 @@ export const useApproveLeaveRequest = () => {
         .single();
       if (error) throw error;
 
-      // Check applicant's notification preferences
-      const { data: pref } = await supabase
+      const { data: pref } = await db
         .from('notification_preferences')
         .select('enable_all, enable_leave_result')
         .eq('user_id', lr.applicant_user_id)
@@ -156,7 +153,7 @@ export const useApproveLeaveRequest = () => {
       const shouldNotify = !pref || (pref.enable_all !== false && pref.enable_leave_result !== false);
 
       if (shouldNotify) {
-        await supabase.from('notifications').insert({
+        await db.from('notifications').insert({
           user_id: lr.applicant_user_id,
           type: 'leave_approved',
           title: '휴가 신청이 승인되었습니다.',
@@ -184,7 +181,7 @@ export const useRejectLeaveRequest = () => {
     mutationFn: async ({ leaveId, rejectionReason }: { leaveId: string; rejectionReason?: string }) => {
       if (!user) throw new Error('Not authenticated');
 
-      const { data: lr, error } = await supabase
+      const { data: lr, error } = await db
         .from('leave_requests')
         .update({
           status: 'rejected',
@@ -197,8 +194,7 @@ export const useRejectLeaveRequest = () => {
         .single();
       if (error) throw error;
 
-      // Check applicant's notification preferences
-      const { data: pref } = await supabase
+      const { data: pref } = await db
         .from('notification_preferences')
         .select('enable_all, enable_leave_result')
         .eq('user_id', lr.applicant_user_id)
@@ -207,7 +203,7 @@ export const useRejectLeaveRequest = () => {
       const shouldNotify = !pref || (pref.enable_all !== false && pref.enable_leave_result !== false);
 
       if (shouldNotify) {
-        await supabase.from('notifications').insert({
+        await db.from('notifications').insert({
           user_id: lr.applicant_user_id,
           type: 'leave_rejected',
           title: '휴가 신청이 반려되었습니다.',

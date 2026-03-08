@@ -11,7 +11,9 @@ export interface NotificationPreference {
   updated_at: string;
 }
 
-const DEFAULTS: Omit<NotificationPreference, 'id' | 'user_id' | 'updated_at'> = {
+const db = supabase as any;
+
+const DEFAULTS = {
   enable_all: true,
   enable_leave_request: true,
   enable_leave_result: true,
@@ -22,13 +24,13 @@ export const useNotificationPreferences = () => {
 
   return useQuery({
     queryKey: ['notification-preferences', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<NotificationPreference | null> => {
       if (!user) return null;
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('notification_preferences')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle() as any;
+        .maybeSingle();
       if (error) throw error;
       return data as NotificationPreference | null;
     },
@@ -44,21 +46,20 @@ export const useUpdateNotificationPreferences = () => {
     mutationFn: async (updates: Partial<Pick<NotificationPreference, 'enable_all' | 'enable_leave_request' | 'enable_leave_result'>>) => {
       if (!user) throw new Error('Not authenticated');
 
-      // Try upsert
-      const { data: existing } = await supabase
+      const { data: existing } = await db
         .from('notification_preferences')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (existing) {
-        const { error } = await supabase
+        const { error } = await db
           .from('notification_preferences')
           .update({ ...updates, updated_at: new Date().toISOString() })
           .eq('user_id', user.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await db
           .from('notification_preferences')
           .insert({ user_id: user.id, ...DEFAULTS, ...updates });
         if (error) throw error;
