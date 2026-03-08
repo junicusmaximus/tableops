@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone } from 'lucide-react';
+import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone, User } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
 import { useNotificationPreferences, useUpdateNotificationPreferences, type NotifPrefField } from '@/hooks/useNotificationPreferences';
+import ProfileSettings from '@/components/profile/ProfileSettings';
 
 const Settings = () => {
   const { data: profile } = useEmployeeProfile();
@@ -84,12 +85,17 @@ const Settings = () => {
         <p className="text-muted-foreground text-sm mt-1">시스템 및 연동 관리</p>
       </div>
 
-      <Tabs defaultValue="notifications">
-        <TabsList>
+      <Tabs defaultValue="profile">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="profile"><User className="w-4 h-4 mr-1" />프로필</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-1" />알림</TabsTrigger>
           <TabsTrigger value="branch"><Store className="w-4 h-4 mr-1" />매장</TabsTrigger>
           <TabsTrigger value="integrations"><Plug className="w-4 h-4 mr-1" />연동</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="profile" className="mt-4">
+          <ProfileSettings />
+        </TabsContent>
 
         <TabsContent value="notifications" className="space-y-4 mt-4">
           <Card>

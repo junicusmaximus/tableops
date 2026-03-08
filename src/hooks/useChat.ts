@@ -16,6 +16,14 @@ export interface ChatRoom {
   unread_count?: number;
 }
 
+export interface SenderProfile {
+  profile_image_url?: string | null;
+  position?: string | null;
+  phone?: string | null;
+  bio?: string | null;
+  status?: string | null;
+}
+
 export interface ChatMessage {
   id: string;
   room_id: string;
@@ -24,6 +32,7 @@ export interface ChatMessage {
   message_type: string;
   created_at: string;
   sender_name?: string;
+  sender_profile?: SenderProfile;
 }
 
 export const useChatRooms = () => {
@@ -104,7 +113,7 @@ export const useChatMessages = (roomId: string | null) => {
 
   const query = useQuery({
     queryKey: ['chat-messages', roomId],
-    queryFn: async () => {
+    queryFn: async (): Promise<ChatMessage[]> => {
       if (!roomId) return [];
 
       const { data: messages, error } = await supabase
@@ -116,19 +125,30 @@ export const useChatMessages = (roomId: string | null) => {
 
       if (error) throw error;
 
-      // Enrich with sender names
+      // Enrich with sender names and profile data
       const senderIds = [...new Set(messages?.map((m) => m.sender_id) ?? [])];
-      const { data: profiles } = await supabase
+      const db = supabase as any;
+      const { data: profiles } = await db
         .from('employee_profiles')
-        .select('user_id, full_name')
+        .select('user_id, full_name, profile_image_url, position, phone, bio, status')
         .in('user_id', senderIds);
 
-      const nameMap = new Map(profiles?.map((p) => [p.user_id, p.full_name]) ?? []);
+      const profileMap = new Map<string, any>(profiles?.map((p: any) => [p.user_id, p]) ?? []);
 
-      return (messages ?? []).map((m) => ({
-        ...m,
-        sender_name: nameMap.get(m.sender_id) ?? '알 수 없음',
-      }));
+      return (messages ?? []).map((m) => {
+        const prof = profileMap.get(m.sender_id);
+        return {
+          ...m,
+          sender_name: prof?.full_name ?? '알 수 없음',
+          sender_profile: prof ? {
+            profile_image_url: prof.profile_image_url,
+            position: prof.position,
+            phone: prof.phone,
+            bio: prof.bio,
+            status: prof.status,
+          } : undefined,
+        } as ChatMessage;
+      });
     },
     enabled: !!roomId && !!user,
   });
