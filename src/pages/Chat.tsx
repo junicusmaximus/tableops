@@ -22,7 +22,7 @@ const Chat = () => {
   const { user } = useAuth();
   const { data: profile } = useEmployeeProfile();
   const { data: storeEmployees = [] } = useStoreEmployees(profile?.store_id);
-  const { isManager } = useUserRole();
+  const isManager = useIsManager();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
