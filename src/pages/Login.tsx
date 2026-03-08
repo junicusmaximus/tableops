@@ -22,7 +22,7 @@ const Login = () => {
     setIsLoading(true);
     const { error } = await signIn(email, password);
     if (error) {
-      toast({ title: '로그인 실패', description: '이메일 또는 비밀번호를 확인해주세요.', variant: 'destructive' });
+      toast({ title: '로그인 실패', description: '아이디 또는 비밀번호가 올바르지 않습니다.', variant: 'destructive' });
     } else {
       navigate('/');
     }
@@ -47,11 +47,11 @@ const Login = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="email">아이디 (이메일)</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="example@tableops.kr"
+                  placeholder="아이디를 입력해주세요."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -63,7 +63,7 @@ const Login = () => {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder="비밀번호를 입력해주세요."
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -81,15 +81,19 @@ const Login = () => {
                 {isLoading ? '로그인 중...' : '로그인'}
               </Button>
             </form>
-            <div className="mt-4 text-center space-y-2">
-              <Link to="/forgot-password" className="text-sm text-primary hover:underline block">
-                비밀번호를 잊으셨나요?
+            <div className="mt-4 flex items-center justify-center gap-3 text-sm">
+              <Link to="/find-id" className="text-muted-foreground hover:text-primary hover:underline">
+                아이디 찾기
               </Link>
-              <p className="text-sm text-muted-foreground">
-                계정이 없으신가요?{' '}
-                <Link to="/signup" className="text-primary hover:underline">회원가입</Link>
-              </p>
+              <span className="text-border">|</span>
+              <Link to="/forgot-password" className="text-muted-foreground hover:text-primary hover:underline">
+                비밀번호 재설정
+              </Link>
             </div>
+            <p className="mt-3 text-sm text-muted-foreground text-center">
+              계정이 없으신가요?{' '}
+              <Link to="/signup" className="text-primary hover:underline">회원가입</Link>
+            </p>
           </CardContent>
         </Card>
       </div>
