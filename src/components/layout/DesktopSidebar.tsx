@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: '대시보드', group: '메인' },
   { to: '/today-briefing', icon: Coffee, label: '오늘의 브리핑', group: '메인' },
   { to: '/attendance', icon: Clock, label: '출퇴근 관리', group: '인사' },
+  { to: '/work-stats', icon: TrendingUp, label: '근무 통계', group: '인사' },
   { to: '/schedule', icon: Calendar, label: '내 스케줄', group: '인사' },
   { to: '/schedule-management', icon: CalendarCog, label: '스케줄 관리', group: '인사', managerOnly: true },
   { to: '/leave', icon: Briefcase, label: '휴가 관리', group: '인사' },
