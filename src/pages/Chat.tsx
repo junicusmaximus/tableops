@@ -299,7 +299,7 @@ const Chat = () => {
     </Card>
   );
 
-  const EmptyChat = () => (
+  const emptyChat = (
     <Card className="flex flex-col items-center justify-center h-full">
       <MessageSquare className="w-12 h-12 text-muted-foreground mb-3" />
       <p className="text-muted-foreground text-sm">채팅방을 선택하세요</p>
