@@ -313,12 +313,12 @@ const Chat = () => {
       </div>
 
       <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-4 h-[calc(100%-3rem)]">
-        <RoomList />
-        {selectedRoomId ? <MessagesPanel /> : <EmptyChat />}
+        {roomList}
+        {selectedRoomId ? messagesPanel : emptyChat}
       </div>
 
       <div className="lg:hidden h-[calc(100%-3rem)]">
-        {selectedRoomId ? <MessagesPanel /> : <RoomList />}
+        {selectedRoomId ? messagesPanel : roomList}
       </div>
     </div>
   );
