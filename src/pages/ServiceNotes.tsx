@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import StatusBadge, { StatusType } from '@/components/common/StatusBadge';
 import EmptyState from '@/components/common/EmptyState';
-import { Plus, Search, Notebook, Edit, Trash2 } from 'lucide-react';
+import { Plus, Notebook, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Note {
