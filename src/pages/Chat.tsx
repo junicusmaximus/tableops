@@ -88,7 +88,7 @@ const Chat = () => {
     }
   };
 
-  const RoomList = () => (
+  const roomList = (
     <Card className="overflow-hidden h-full flex flex-col">
       <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">채팅방</CardTitle>
@@ -166,7 +166,7 @@ const Chat = () => {
     </Card>
   );
 
-  const MessagesPanel = () => (
+  const messagesPanel = (
     <Card className="flex flex-col overflow-hidden h-full">
       <CardHeader className="pb-3 border-b border-border flex-row items-center gap-2 space-y-0">
         <Button
@@ -299,7 +299,7 @@ const Chat = () => {
     </Card>
   );
 
-  const EmptyChat = () => (
+  const emptyChat = (
     <Card className="flex flex-col items-center justify-center h-full">
       <MessageSquare className="w-12 h-12 text-muted-foreground mb-3" />
       <p className="text-muted-foreground text-sm">채팅방을 선택하세요</p>
@@ -313,12 +313,12 @@ const Chat = () => {
       </div>
 
       <div className="hidden lg:grid lg:grid-cols-[300px_1fr] gap-4 h-[calc(100%-3rem)]">
-        <RoomList />
-        {selectedRoomId ? <MessagesPanel /> : <EmptyChat />}
+        {roomList}
+        {selectedRoomId ? messagesPanel : emptyChat}
       </div>
 
       <div className="lg:hidden h-[calc(100%-3rem)]">
-        {selectedRoomId ? <MessagesPanel /> : <RoomList />}
+        {selectedRoomId ? messagesPanel : roomList}
       </div>
     </div>
   );
