@@ -51,7 +51,7 @@ const Signup = () => {
       return;
     }
     setIsLoading(true);
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName, role, phone);
     if (error) {
       toast({ title: '회원가입 실패', description: error.message, variant: 'destructive' });
     } else {
