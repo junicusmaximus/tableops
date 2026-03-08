@@ -153,10 +153,52 @@ export type Database = {
           },
         ]
       }
+      chat_mentions: {
+        Row: {
+          created_at: string
+          id: string
+          mentioned_user_id: string
+          message_id: string
+          room_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentioned_user_id: string
+          message_id: string
+          room_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string
+          message_id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_mentions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_mentions_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
           created_at: string
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
           id: string
           message_type: string
           room_id: string
@@ -165,6 +207,9 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           message_type?: string
           room_id: string
@@ -173,6 +218,9 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           message_type?: string
           room_id?: string
@@ -252,6 +300,9 @@ export type Database = {
           created_by: string
           id: string
           name: string
+          pinned_at: string | null
+          pinned_by: string | null
+          pinned_message_id: string | null
           store_id: string
           type: string
           updated_at: string
@@ -261,6 +312,9 @@ export type Database = {
           created_by: string
           id?: string
           name: string
+          pinned_at?: string | null
+          pinned_by?: string | null
+          pinned_message_id?: string | null
           store_id: string
           type?: string
           updated_at?: string
@@ -270,11 +324,21 @@ export type Database = {
           created_by?: string
           id?: string
           name?: string
+          pinned_at?: string | null
+          pinned_by?: string | null
+          pinned_message_id?: string | null
           store_id?: string
           type?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_rooms_pinned_message_id_fkey"
+            columns: ["pinned_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_rooms_store_id_fkey"
             columns: ["store_id"]
