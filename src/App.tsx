@@ -90,6 +90,7 @@ const App = () => (
               <Route path="announcements" element={<Announcements />} />
               <Route path="settings" element={<Settings />} />
               <Route path="more" element={<MoreMenu />} />
+              <Route path="stores" element={<Stores />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
