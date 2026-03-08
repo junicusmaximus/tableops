@@ -164,7 +164,7 @@ export const useInventoryAlerts = () => {
       const itemMap = new Map((items ?? []).map((i: any) => [i.id, i]));
 
       return (data ?? []).map((d: any) => {
-        const item = itemMap.get(d.item_id);
+        const item: any = itemMap.get(d.item_id);
         return {
           ...d,
           item_name: item?.item_name ?? '알 수 없음',
