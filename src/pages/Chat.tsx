@@ -11,7 +11,7 @@ import {
   parseMentions,
 } from '@/hooks/useChat';
 import { useEmployeeProfile, useStoreEmployees } from '@/hooks/useEmployeeProfile';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useIsManager } from '@/hooks/useUserRole';
 import { toast } from 'sonner';
 import ChatWorkspace from '@/components/chat/ChatWorkspace';
 import ChatSidebar from '@/components/chat/ChatSidebar';
