@@ -18,12 +18,15 @@ export type Database = {
         Row: {
           check_in_at: string | null
           check_out_at: string | null
+          checkin_latitude: number | null
+          checkin_longitude: number | null
           created_at: string
           date: string
           employee_profile_id: string
           id: string
           is_early_leave: boolean | null
           is_late: boolean | null
+          is_outside_radius: boolean | null
           notes: string | null
           scheduled_end: string | null
           scheduled_start: string | null
@@ -36,12 +39,15 @@ export type Database = {
         Insert: {
           check_in_at?: string | null
           check_out_at?: string | null
+          checkin_latitude?: number | null
+          checkin_longitude?: number | null
           created_at?: string
           date?: string
           employee_profile_id: string
           id?: string
           is_early_leave?: boolean | null
           is_late?: boolean | null
+          is_outside_radius?: boolean | null
           notes?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
@@ -54,12 +60,15 @@ export type Database = {
         Update: {
           check_in_at?: string | null
           check_out_at?: string | null
+          checkin_latitude?: number | null
+          checkin_longitude?: number | null
           created_at?: string
           date?: string
           employee_profile_id?: string
           id?: string
           is_early_leave?: boolean | null
           is_late?: boolean | null
+          is_outside_radius?: boolean | null
           notes?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
@@ -1060,6 +1069,60 @@ export type Database = {
           },
         ]
       }
+      shift_swaps: {
+        Row: {
+          accepter_id: string | null
+          approved_by: string | null
+          chat_message_id: string | null
+          created_at: string
+          id: string
+          requester_id: string
+          shift_id: string
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          accepter_id?: string | null
+          approved_by?: string | null
+          chat_message_id?: string | null
+          created_at?: string
+          id?: string
+          requester_id: string
+          shift_id: string
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          accepter_id?: string | null
+          approved_by?: string | null
+          chat_message_id?: string | null
+          created_at?: string
+          id?: string
+          requester_id?: string
+          shift_id?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_swaps_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_swaps_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shift_templates: {
         Row: {
           break_minutes: number
@@ -1176,8 +1239,11 @@ export type Database = {
         Row: {
           address: string | null
           brand_id: string
+          checkin_radius_meters: number | null
           created_at: string
           id: string
+          latitude: number | null
+          longitude: number | null
           name: string
           organization_id: string
           phone: string | null
@@ -1186,8 +1252,11 @@ export type Database = {
         Insert: {
           address?: string | null
           brand_id: string
+          checkin_radius_meters?: number | null
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name: string
           organization_id: string
           phone?: string | null
@@ -1196,8 +1265,11 @@ export type Database = {
         Update: {
           address?: string | null
           brand_id?: string
+          checkin_radius_meters?: number | null
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           organization_id?: string
           phone?: string | null
