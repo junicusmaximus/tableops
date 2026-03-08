@@ -33,6 +33,8 @@ import Settings from "@/pages/Settings";
 import MoreMenu from "@/pages/MoreMenu";
 import Stores from "@/pages/Stores";
 import WorkStats from "@/pages/WorkStats";
+import AIScheduleRecommend from "@/pages/AIScheduleRecommend";
+import AIStoreReport from "@/pages/AIStoreReport";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
