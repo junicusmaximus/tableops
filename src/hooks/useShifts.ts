@@ -8,7 +8,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays } fro
 export interface Shift {
   id: string;
   store_id: string;
-  user_id: string;
+  user_id: string | null;
   shift_date: string;
   start_time: string;
   end_time: string;
@@ -17,6 +17,10 @@ export interface Shift {
   notes: string | null;
   created_by: string;
   employee_name?: string;
+  assignee_type?: string;
+  manual_name?: string | null;
+  manual_role_label?: string | null;
+  manual_phone?: string | null;
 }
 
 export const useMonthlyShifts = (month: Date, options?: { userOnly?: boolean }) => {
@@ -44,21 +48,28 @@ export const useMonthlyShifts = (month: Date, options?: { userOnly?: boolean }) 
       const { data, error } = await query;
       if (error) throw error;
 
-      const userIds = [...new Set((data ?? []).map((s) => s.user_id))];
-      if (userIds.length === 0) return (data ?? []).map(s => ({ ...s, employee_name: '미지정' })) as Shift[];
-      const { data: employees } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name')
-        .eq('store_id', profile.store_id)
-        .in('user_id', userIds);
-      const nameMap = new Map((employees ?? []).map((e) => [e.user_id, e.full_name]));
-      return (data ?? []).map((s) => ({ ...s, employee_name: nameMap.get(s.user_id) ?? '미지정' })) as Shift[];
+      const userIds = [...new Set((data ?? []).filter(s => s.user_id).map((s) => s.user_id!))];
+      let nameMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: employees } = await supabase
+          .from('employee_profiles')
+          .select('user_id, full_name')
+          .eq('store_id', profile.store_id)
+          .in('user_id', userIds);
+        nameMap = new Map((employees ?? []).map((e) => [e.user_id, e.full_name]));
+      }
+
+      return (data ?? []).map((s: any) => ({
+        ...s,
+        employee_name: s.assignee_type === 'manual_entry'
+          ? (s.manual_name || '직접 입력')
+          : (s.user_id ? nameMap.get(s.user_id) ?? '미지정' : '미지정'),
+      })) as Shift[];
     },
     enabled: !!profile?.store_id,
   });
 };
 
-// Keep weekly for backward compat
 export const useWeeklyShifts = (weekStart: Date) => {
   const { data: profile } = useEmployeeProfile();
   const start = format(startOfWeek(weekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -76,16 +87,15 @@ export const useWeeklyShifts = (weekStart: Date) => {
         .lte('shift_date', end)
         .order('start_time');
       if (error) throw error;
-
-      const userIds = [...new Set((data ?? []).map((s) => s.user_id))];
-      if (userIds.length === 0) return [];
+      const userIds = [...new Set((data ?? []).filter(s => s.user_id).map((s) => s.user_id!))];
+      if (userIds.length === 0) return (data ?? []).map(s => ({ ...s, employee_name: '미지정' })) as Shift[];
       const { data: employees } = await supabase
         .from('employee_profiles')
         .select('user_id, full_name')
         .eq('store_id', profile.store_id)
         .in('user_id', userIds);
       const nameMap = new Map((employees ?? []).map((e) => [e.user_id, e.full_name]));
-      return (data ?? []).map((s) => ({ ...s, employee_name: nameMap.get(s.user_id) ?? '미지정' })) as Shift[];
+      return (data ?? []).map((s) => ({ ...s, employee_name: s.user_id ? nameMap.get(s.user_id) ?? '미지정' : '미지정' })) as Shift[];
     },
     enabled: !!profile?.store_id,
   });
@@ -99,18 +109,22 @@ export const useCreateShift = () => {
 
   return useMutation({
     mutationFn: async (input: {
-      user_id: string;
+      user_id?: string | null;
       shift_date: string;
       start_time: string;
       end_time: string;
       break_minutes?: number;
-      role?: string;
-      notes?: string;
+      role?: string | null;
+      notes?: string | null;
+      assignee_type?: string;
+      manual_name?: string | null;
+      manual_role_label?: string | null;
+      manual_phone?: string | null;
     }) => {
       if (!user || !profile) throw new Error('인증이 필요합니다');
       const { error } = await supabase.from('shifts').insert({
         store_id: profile.store_id,
-        user_id: input.user_id,
+        user_id: input.user_id || null,
         shift_date: input.shift_date,
         start_time: input.start_time,
         end_time: input.end_time,
@@ -118,7 +132,11 @@ export const useCreateShift = () => {
         role: input.role ?? null,
         notes: input.notes ?? null,
         created_by: user.id,
-      });
+        assignee_type: input.assignee_type ?? 'registered_user',
+        manual_name: input.manual_name ?? null,
+        manual_role_label: input.manual_role_label ?? null,
+        manual_phone: input.manual_phone ?? null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -138,15 +156,9 @@ export const useUpdateShift = () => {
   return useMutation({
     mutationFn: async ({ id, ...input }: {
       id: string;
-      user_id?: string;
-      shift_date?: string;
-      start_time?: string;
-      end_time?: string;
-      break_minutes?: number;
-      role?: string;
-      notes?: string;
+      [key: string]: any;
     }) => {
-      const { error } = await supabase.from('shifts').update(input).eq('id', id);
+      const { error } = await supabase.from('shifts').update(input as any).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -198,7 +210,7 @@ export const useCopyPreviousWeek = () => {
       if (error) throw error;
       if (!prevShifts?.length) throw new Error('이전 주 스케줄이 없습니다');
 
-      const newShifts = prevShifts.map((s) => {
+      const newShifts = prevShifts.map((s: any) => {
         const dayOfWeek = new Date(s.shift_date).getDay();
         const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
         const newDate = format(addDays(targetStart, adjustedDay), 'yyyy-MM-dd');
@@ -212,10 +224,14 @@ export const useCopyPreviousWeek = () => {
           role: s.role,
           notes: s.notes,
           created_by: user.id,
+          assignee_type: s.assignee_type ?? 'registered_user',
+          manual_name: s.manual_name,
+          manual_role_label: s.manual_role_label,
+          manual_phone: s.manual_phone,
         };
       });
 
-      const { error: insertErr } = await supabase.from('shifts').insert(newShifts);
+      const { error: insertErr } = await supabase.from('shifts').insert(newShifts as any);
       if (insertErr) throw insertErr;
     },
     onSuccess: () => {

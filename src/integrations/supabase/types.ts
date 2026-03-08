@@ -729,46 +729,58 @@ export type Database = {
       }
       shifts: {
         Row: {
+          assignee_type: string
           break_minutes: number | null
           created_at: string
           created_by: string
           end_time: string
           id: string
+          manual_name: string | null
+          manual_phone: string | null
+          manual_role_label: string | null
           notes: string | null
           role: string | null
           shift_date: string
           start_time: string
           store_id: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          assignee_type?: string
           break_minutes?: number | null
           created_at?: string
           created_by: string
           end_time: string
           id?: string
+          manual_name?: string | null
+          manual_phone?: string | null
+          manual_role_label?: string | null
           notes?: string | null
           role?: string | null
           shift_date: string
           start_time: string
           store_id: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          assignee_type?: string
           break_minutes?: number | null
           created_at?: string
           created_by?: string
           end_time?: string
           id?: string
+          manual_name?: string | null
+          manual_phone?: string | null
+          manual_role_label?: string | null
           notes?: string | null
           role?: string | null
           shift_date?: string
           start_time?: string
           store_id?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

@@ -40,7 +40,8 @@ const ForgotPassword = () => {
           <CardContent className="pt-6">
             {sent ? (
               <div className="text-center space-y-4">
-                <p className="text-muted-foreground">비밀번호 재설정 이메일을 발송했습니다.</p>
+                <p className="text-sm text-muted-foreground">비밀번호 재설정 링크가 이메일로 발송되었습니다.</p>
+                <p className="text-xs text-muted-foreground">이메일을 확인하고 링크를 클릭하여 비밀번호를 재설정해주세요.</p>
                 <Link to="/login">
                   <Button variant="outline" className="w-full"><ArrowLeft className="w-4 h-4 mr-2" />로그인으로 돌아가기</Button>
                 </Link>
@@ -48,14 +49,14 @@ const ForgotPassword = () => {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">이메일</Label>
-                  <Input id="email" type="email" placeholder="example@tableops.kr" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  <Label htmlFor="email">아이디 (이메일)</Label>
+                  <Input id="email" type="email" placeholder="가입한 이메일을 입력해주세요." value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? '발송 중...' : '재설정 이메일 발송'}
                 </Button>
                 <Link to="/login" className="text-sm text-primary hover:underline block text-center">
-                  로그인으로 돌아가기
+                  <ArrowLeft className="w-3 h-3 inline mr-1" />로그인으로 돌아가기
                 </Link>
               </form>
             )}

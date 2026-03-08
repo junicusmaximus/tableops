@@ -16,9 +16,18 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   part_time: '파트타이머',
 };
 
-// Ordered by permission level (highest first)
+const ROLE_RANK: Record<AppRole, number> = {
+  ceo: 1,
+  owner: 2,
+  boss: 3,
+  manager: 4,
+  full_time: 5,
+  part_time: 6,
+  kitchen_staff: 7,
+  hall_staff: 8,
+};
+
 const MANAGER_ROLES: AppRole[] = ['ceo', 'owner', 'boss', 'manager'];
-const STAFF_ROLES: AppRole[] = ['full_time', 'part_time', 'kitchen_staff', 'hall_staff'];
 
 export const SIGNUP_ROLES: { value: AppRole; label: string }[] = [
   { value: 'ceo', label: '대표' },
@@ -30,10 +39,9 @@ export const SIGNUP_ROLES: { value: AppRole; label: string }[] = [
 
 export const useUserRole = () => {
   const { user } = useAuth();
-  const { data: profile } = useEmployeeProfile();
 
   return useQuery({
-    queryKey: ['user-role', user?.id, profile?.store_id],
+    queryKey: ['user-role', user?.id],
     queryFn: async () => {
       if (!user) return null;
       const { data, error } = await supabase
@@ -49,23 +57,48 @@ export const useUserRole = () => {
 };
 
 export const useCurrentRole = (): AppRole | null => {
-  const { data: roles } = useUserRole();
+  const { user } = useAuth();
+  const { data: roles, isLoading: rolesLoading } = useUserRole();
   const { data: profile } = useEmployeeProfile();
-  if (!roles || roles.length === 0) return null;
-  const storeRole = roles.find((r) => r.store_id === profile?.store_id);
-  return (storeRole?.role ?? roles[0]?.role ?? null) as AppRole | null;
+
+  // If roles loaded and found, use them
+  if (roles && roles.length > 0) {
+    const storeRole = roles.find((r) => r.store_id === profile?.store_id);
+    return (storeRole?.role ?? roles[0]?.role ?? null) as AppRole | null;
+  }
+
+  // Fallback: check user metadata (set during signup)
+  if (!rolesLoading && user) {
+    const metaRole = user.user_metadata?.role as AppRole | undefined;
+    if (metaRole && Object.keys(ROLE_LABELS).includes(metaRole)) {
+      return metaRole;
+    }
+  }
+
+  return null;
 };
 
 export const useIsManager = (): boolean => {
   const role = useCurrentRole();
-  return MANAGER_ROLES.includes(role as AppRole);
+  if (!role) return false;
+  return MANAGER_ROLES.includes(role);
 };
 
 export const useIsStaff = (): boolean => {
   const role = useCurrentRole();
-  return STAFF_ROLES.includes(role as AppRole);
+  if (!role) return false;
+  return !MANAGER_ROLES.includes(role);
+};
+
+export const isManagerRole = (role: string | null | undefined): boolean => {
+  if (!role) return false;
+  return MANAGER_ROLES.includes(role as AppRole);
 };
 
 export const getRoleLabel = (role: string): string => {
   return ROLE_LABELS[role as AppRole] ?? role;
+};
+
+export const getRoleRank = (role: string): number => {
+  return ROLE_RANK[role as AppRole] ?? 99;
 };

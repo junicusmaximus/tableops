@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useStaffList, useAddStaff, useUpdateStaff, StaffMember } from '@/hooks/useStaff';
 import { ROLE_LABELS, AppRole, useIsManager } from '@/hooks/useUserRole';
+import RoleBadge from '@/components/common/RoleBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Users } from 'lucide-react';
+import { Plus, Search, Users, ShieldAlert } from 'lucide-react';
 import EmptyState from '@/components/common/EmptyState';
 
 const EMPLOYMENT_TYPES: Record<string, string> = {
@@ -26,8 +26,18 @@ const StaffManagement = () => {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
-    full_name: '', phone: '', position: '', employment_type: 'full_time', hire_date: '', role: 'hall_staff',
+    full_name: '', phone: '', position: '', employment_type: 'full_time', hire_date: '', role: 'full_time',
   });
+
+  if (!isManager) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
+        <ShieldAlert className="w-16 h-16 text-muted-foreground/40 mb-4" />
+        <p className="text-lg font-medium text-foreground">관리자 직급 이상부터 사용 가능한 영역입니다.</p>
+        <p className="text-sm text-muted-foreground mt-2">대표, 사장님, 매니저 권한이 필요합니다.</p>
+      </div>
+    );
+  }
 
   const filtered = staff.filter((s) => {
     const matchesSearch = s.full_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -39,7 +49,7 @@ const StaffManagement = () => {
   const handleAdd = async () => {
     await addStaff.mutateAsync(form);
     setDialogOpen(false);
-    setForm({ full_name: '', phone: '', position: '', employment_type: 'full_time', hire_date: '', role: 'hall_staff' });
+    setForm({ full_name: '', phone: '', position: '', employment_type: 'full_time', hire_date: '', role: 'full_time' });
   };
 
   return (
@@ -49,47 +59,45 @@ const StaffManagement = () => {
           <h1 className="text-2xl font-bold">직원 관리</h1>
           <p className="text-muted-foreground text-sm mt-1">총 {staff.length}명</p>
         </div>
-        {isManager && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" />직원 추가</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>새 직원 등록</DialogTitle></DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div><Label>이름 *</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="홍길동" /></div>
-                <div><Label>연락처</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="010-0000-0000" /></div>
-                <div><Label>직책</Label><Input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} placeholder="홀 매니저" /></div>
-                <div>
-                  <Label>역할</Label>
-                  <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(ROLE_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>고용 형태</Label>
-                  <Select value={form.employment_type} onValueChange={(v) => setForm({ ...form, employment_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(EMPLOYMENT_TYPES).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>입사일</Label><Input type="date" value={form.hire_date} onChange={(e) => setForm({ ...form, hire_date: e.target.value })} /></div>
-                <Button onClick={handleAdd} disabled={!form.full_name || addStaff.isPending} className="w-full">
-                  {addStaff.isPending ? '등록 중...' : '등록하기'}
-                </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button><Plus className="w-4 h-4 mr-2" />직원 추가</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>새 직원 등록</DialogTitle></DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div><Label>이름 *</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="홍길동" /></div>
+              <div><Label>연락처</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="010-0000-0000" /></div>
+              <div><Label>직책</Label><Input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} placeholder="홀 매니저" /></div>
+              <div>
+                <Label>직급</Label>
+                <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ROLE_LABELS).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </DialogContent>
-          </Dialog>
-        )}
+              <div>
+                <Label>고용 형태</Label>
+                <Select value={form.employment_type} onValueChange={(v) => setForm({ ...form, employment_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(EMPLOYMENT_TYPES).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>입사일</Label><Input type="date" value={form.hire_date} onChange={(e) => setForm({ ...form, hire_date: e.target.value })} /></div>
+              <Button onClick={handleAdd} disabled={!form.full_name || addStaff.isPending} className="w-full">
+                {addStaff.isPending ? '등록 중...' : '등록하기'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -100,7 +108,7 @@ const StaffManagement = () => {
               <Input className="pl-9" placeholder="이름 또는 연락처로 검색" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[140px]"><SelectValue placeholder="역할 필터" /></SelectTrigger>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="직급 필터" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">전체</SelectItem>
                 {Object.entries(ROLE_LABELS).map(([k, v]) => (
@@ -121,7 +129,7 @@ const StaffManagement = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>이름</TableHead>
-                    <TableHead>역할</TableHead>
+                    <TableHead>직급</TableHead>
                     <TableHead className="hidden sm:table-cell">직책</TableHead>
                     <TableHead className="hidden sm:table-cell">연락처</TableHead>
                     <TableHead className="hidden md:table-cell">고용형태</TableHead>
@@ -133,9 +141,7 @@ const StaffManagement = () => {
                     <TableRow key={s.id}>
                       <TableCell className="font-medium">{s.full_name}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="text-xs">
-                          {ROLE_LABELS[(s.role as AppRole)] ?? s.role}
-                        </Badge>
+                        <RoleBadge role={s.role} />
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">{s.position ?? '-'}</TableCell>
                       <TableCell className="hidden sm:table-cell">{s.phone ?? '-'}</TableCell>

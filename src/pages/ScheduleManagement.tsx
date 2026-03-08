@@ -1,30 +1,44 @@
 import { useState, useMemo } from 'react';
 import { useMonthlyShifts, useCreateShift, useUpdateShift, useDeleteShift, Shift } from '@/hooks/useShifts';
 import { useStoreEmployees, useEmployeeProfile } from '@/hooks/useEmployeeProfile';
-import { useIsManager, getRoleLabel } from '@/hooks/useUserRole';
+import { useIsManager, useCurrentRole, getRoleLabel } from '@/hooks/useUserRole';
+import RoleBadge from '@/components/common/RoleBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2, Calendar as CalIcon, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2, Calendar as CalIcon, Users, ShieldAlert, UserPlus } from 'lucide-react';
 import {
   format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, isSameMonth, isSameDay, isToday,
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일'];
 
 const emptyForm = {
-  user_id: '', shift_date: '', start_time: '09:00', end_time: '18:00', break_minutes: '60', role: '', notes: '',
+  assignee_type: 'registered_user' as 'registered_user' | 'manual_entry',
+  user_id: '',
+  manual_name: '',
+  manual_role_label: '',
+  manual_phone: '',
+  shift_date: '',
+  start_time: '09:00',
+  end_time: '18:00',
+  break_minutes: '60',
+  role: '',
+  notes: '',
 };
 
 const ScheduleManagement = () => {
+  const { user } = useAuth();
   const isManager = useIsManager();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -33,6 +47,7 @@ const ScheduleManagement = () => {
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [filterEmployee, setFilterEmployee] = useState<string>('all');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const { data: profile } = useEmployeeProfile();
   const { data: shifts = [] } = useMonthlyShifts(currentMonth);
@@ -41,8 +56,15 @@ const ScheduleManagement = () => {
   const updateShift = useUpdateShift();
   const deleteShift = useDeleteShift();
 
+  // If not manager, show blocked message
   if (!isManager) {
-    return <Navigate to="/schedule" replace />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
+        <ShieldAlert className="w-16 h-16 text-muted-foreground/40 mb-4" />
+        <p className="text-lg font-medium text-foreground">관리자 직급 이상부터 사용 가능한 영역입니다.</p>
+        <p className="text-sm text-muted-foreground mt-2">대표, 사장님, 매니저 권한이 필요합니다.</p>
+      </div>
+    );
   }
 
   const filteredShifts = filterEmployee === 'all'
@@ -87,8 +109,13 @@ const ScheduleManagement = () => {
 
   const openEditDialog = (shift: Shift) => {
     setEditingShift(shift);
+    const isManual = (shift as any).assignee_type === 'manual_entry';
     setForm({
-      user_id: shift.user_id,
+      assignee_type: isManual ? 'manual_entry' : 'registered_user',
+      user_id: shift.user_id ?? '',
+      manual_name: (shift as any).manual_name ?? '',
+      manual_role_label: (shift as any).manual_role_label ?? '',
+      manual_phone: (shift as any).manual_phone ?? '',
       shift_date: shift.shift_date,
       start_time: shift.start_time?.slice(0, 5) ?? '09:00',
       end_time: shift.end_time?.slice(0, 5) ?? '18:00',
@@ -100,33 +127,44 @@ const ScheduleManagement = () => {
   };
 
   const handleSubmit = async () => {
+    if (form.assignee_type === 'registered_user' && !form.user_id) return;
+    if (form.assignee_type === 'manual_entry' && !form.manual_name.trim()) return;
+    if (!form.shift_date) return;
+
+    const payload: any = {
+      shift_date: form.shift_date,
+      start_time: form.start_time,
+      end_time: form.end_time,
+      break_minutes: parseInt(form.break_minutes) || 0,
+      role: form.role || null,
+      notes: form.notes || null,
+      assignee_type: form.assignee_type,
+      user_id: form.assignee_type === 'registered_user' ? form.user_id : null,
+      manual_name: form.assignee_type === 'manual_entry' ? form.manual_name : null,
+      manual_role_label: form.assignee_type === 'manual_entry' ? form.manual_role_label : null,
+      manual_phone: form.assignee_type === 'manual_entry' ? form.manual_phone : null,
+    };
+
     if (editingShift) {
-      await updateShift.mutateAsync({
-        id: editingShift.id,
-        user_id: form.user_id,
-        shift_date: form.shift_date,
-        start_time: form.start_time,
-        end_time: form.end_time,
-        break_minutes: parseInt(form.break_minutes) || 0,
-        role: form.role || undefined,
-        notes: form.notes || undefined,
-      });
+      await updateShift.mutateAsync({ id: editingShift.id, ...payload });
     } else {
-      await createShift.mutateAsync({
-        user_id: form.user_id,
-        shift_date: form.shift_date,
-        start_time: form.start_time,
-        end_time: form.end_time,
-        break_minutes: parseInt(form.break_minutes) || 0,
-        role: form.role || undefined,
-        notes: form.notes || undefined,
-      });
+      await createShift.mutateAsync(payload);
     }
     setDialogOpen(false);
     setForm(emptyForm);
   };
 
+  const handleDelete = async (id: string) => {
+    await deleteShift.mutateAsync(id);
+    setDeleteConfirmId(null);
+  };
+
   const isPending = createShift.isPending || updateShift.isPending;
+
+  const getShiftDisplayName = (s: any) => {
+    if (s.assignee_type === 'manual_entry') return s.manual_name || '직접 입력';
+    return s.employee_name || '미지정';
+  };
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -195,7 +233,7 @@ const ScheduleManagement = () => {
                     <div className="mt-1 space-y-0.5">
                       {dayShifts.slice(0, 2).map((s) => (
                         <div key={s.id} className="bg-primary/10 text-primary rounded px-1 py-0.5 text-[10px] truncate leading-tight">
-                          {s.employee_name} {s.start_time?.slice(0, 5)}
+                          {getShiftDisplayName(s)} {s.start_time?.slice(0, 5)}
                         </div>
                       ))}
                       {dayShifts.length > 2 && (
@@ -233,16 +271,21 @@ const ScheduleManagement = () => {
                 </Button>
               </div>
             ) : (
-              selectedShifts.map((s) => (
+              selectedShifts.map((s: any) => (
                 <Card key={s.id}>
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{s.employee_name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{getShiftDisplayName(s)}</span>
+                        {s.assignee_type === 'manual_entry' && (
+                          <Badge variant="outline" className="text-[10px]"><UserPlus className="w-3 h-3 mr-0.5" />직접입력</Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1">
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setSheetOpen(false); openEditDialog(s); }}>
                           <Edit2 className="w-3.5 h-3.5" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteShift.mutate(s.id)}>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteConfirmId(s.id)}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
@@ -261,24 +304,55 @@ const ScheduleManagement = () => {
         </SheetContent>
       </Sheet>
 
+      {/* Delete confirmation */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>스케줄 삭제</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">이 스케줄을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>취소</Button>
+            <Button variant="destructive" onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)} disabled={deleteShift.isPending}>
+              {deleteShift.isPending ? '삭제 중...' : '삭제'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingShift ? '스케줄 수정' : '스케줄 등록'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div>
-              <Label>직원</Label>
-              <Select value={form.user_id} onValueChange={(v) => setForm({ ...form, user_id: v })}>
-                <SelectTrigger><SelectValue placeholder="직원 선택" /></SelectTrigger>
-                <SelectContent>
-                  {employees.map((e) => (
-                    <SelectItem key={e.user_id} value={e.user_id}>{e.full_name} {e.position ? `(${e.position})` : ''}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Assignee type tabs */}
+            <Tabs value={form.assignee_type} onValueChange={(v) => setForm({ ...form, assignee_type: v as any, user_id: '', manual_name: '' })}>
+              <TabsList className="w-full">
+                <TabsTrigger value="registered_user" className="flex-1">등록된 회원 선택</TabsTrigger>
+                <TabsTrigger value="manual_entry" className="flex-1">직접 입력</TabsTrigger>
+              </TabsList>
+              <TabsContent value="registered_user" className="mt-3">
+                <div>
+                  <Label>직원</Label>
+                  <Select value={form.user_id} onValueChange={(v) => setForm({ ...form, user_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="직원 선택" /></SelectTrigger>
+                    <SelectContent>
+                      {employees.map((e) => (
+                        <SelectItem key={e.user_id} value={e.user_id}>
+                          {e.full_name} {e.position ? `(${e.position})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+              <TabsContent value="manual_entry" className="mt-3 space-y-3">
+                <div><Label>이름 *</Label><Input value={form.manual_name} onChange={(e) => setForm({ ...form, manual_name: e.target.value })} placeholder="이름을 입력해주세요." /></div>
+                <div><Label>직급 / 분류</Label><Input value={form.manual_role_label} onChange={(e) => setForm({ ...form, manual_role_label: e.target.value })} placeholder="예: 파트타이머, 외부 도움" /></div>
+                <div><Label>연락처</Label><Input value={form.manual_phone} onChange={(e) => setForm({ ...form, manual_phone: e.target.value })} placeholder="010-0000-0000" /></div>
+              </TabsContent>
+            </Tabs>
+
             <div><Label>날짜</Label><Input type="date" value={form.shift_date} onChange={(e) => setForm({ ...form, shift_date: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>시작</Label><Input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
@@ -292,7 +366,15 @@ const ScheduleManagement = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>취소</Button>
-            <Button onClick={handleSubmit} disabled={!form.user_id || !form.shift_date || isPending}>
+            <Button
+              onClick={handleSubmit}
+              disabled={
+                isPending ||
+                !form.shift_date ||
+                (form.assignee_type === 'registered_user' && !form.user_id) ||
+                (form.assignee_type === 'manual_entry' && !form.manual_name.trim())
+              }
+            >
               {isPending ? '처리 중...' : editingShift ? '수정' : '등록'}
             </Button>
           </DialogFooter>
