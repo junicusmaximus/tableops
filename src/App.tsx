@@ -32,6 +32,7 @@ import Announcements from "@/pages/Announcements";
 import Settings from "@/pages/Settings";
 import MoreMenu from "@/pages/MoreMenu";
 import Stores from "@/pages/Stores";
+import WorkStats from "@/pages/WorkStats";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +96,7 @@ const App = () => (
               <Route path="settings" element={<Settings />} />
               <Route path="more" element={<MoreMenu />} />
               <Route path="stores" element={<Stores />} />
+              <Route path="work-stats" element={<WorkStats />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

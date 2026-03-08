@@ -18,12 +18,15 @@ export type Database = {
         Row: {
           check_in_at: string | null
           check_out_at: string | null
+          checkin_latitude: number | null
+          checkin_longitude: number | null
           created_at: string
           date: string
           employee_profile_id: string
           id: string
           is_early_leave: boolean | null
           is_late: boolean | null
+          is_outside_radius: boolean | null
           notes: string | null
           scheduled_end: string | null
           scheduled_start: string | null
@@ -36,12 +39,15 @@ export type Database = {
         Insert: {
           check_in_at?: string | null
           check_out_at?: string | null
+          checkin_latitude?: number | null
+          checkin_longitude?: number | null
           created_at?: string
           date?: string
           employee_profile_id: string
           id?: string
           is_early_leave?: boolean | null
           is_late?: boolean | null
+          is_outside_radius?: boolean | null
           notes?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
@@ -54,12 +60,15 @@ export type Database = {
         Update: {
           check_in_at?: string | null
           check_out_at?: string | null
+          checkin_latitude?: number | null
+          checkin_longitude?: number | null
           created_at?: string
           date?: string
           employee_profile_id?: string
           id?: string
           is_early_leave?: boolean | null
           is_late?: boolean | null
+          is_outside_radius?: boolean | null
           notes?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
@@ -153,10 +162,52 @@ export type Database = {
           },
         ]
       }
+      chat_mentions: {
+        Row: {
+          created_at: string
+          id: string
+          mentioned_user_id: string
+          message_id: string
+          room_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentioned_user_id: string
+          message_id: string
+          room_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string
+          message_id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_mentions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_mentions_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
           created_at: string
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
           id: string
           message_type: string
           room_id: string
@@ -165,6 +216,9 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           message_type?: string
           room_id: string
@@ -173,6 +227,9 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           message_type?: string
           room_id?: string
@@ -252,6 +309,9 @@ export type Database = {
           created_by: string
           id: string
           name: string
+          pinned_at: string | null
+          pinned_by: string | null
+          pinned_message_id: string | null
           store_id: string
           type: string
           updated_at: string
@@ -261,6 +321,9 @@ export type Database = {
           created_by: string
           id?: string
           name: string
+          pinned_at?: string | null
+          pinned_by?: string | null
+          pinned_message_id?: string | null
           store_id: string
           type?: string
           updated_at?: string
@@ -270,11 +333,21 @@ export type Database = {
           created_by?: string
           id?: string
           name?: string
+          pinned_at?: string | null
+          pinned_by?: string | null
+          pinned_message_id?: string | null
           store_id?: string
           type?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_rooms_pinned_message_id_fkey"
+            columns: ["pinned_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_rooms_store_id_fkey"
             columns: ["store_id"]
@@ -473,18 +546,72 @@ export type Database = {
           },
         ]
       }
+      inventory_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_resolved: boolean
+          item_id: string
+          message: string
+          resolved_at: string | null
+          resolved_by: string | null
+          store_id: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean
+          item_id: string
+          message: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          store_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean
+          item_id?: string
+          message?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_alerts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_alerts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           aliases: string[] | null
           category: string
           created_at: string
           created_by: string
+          current_stock: number | null
           default_unit: string | null
           english_name: string | null
+          expiry_date: string | null
           id: string
           is_active: boolean
           item_name: string
           item_type: string
+          minimum_stock: number | null
           short_code: string | null
           store_id: string
           updated_at: string
@@ -494,12 +621,15 @@ export type Database = {
           category?: string
           created_at?: string
           created_by: string
+          current_stock?: number | null
           default_unit?: string | null
           english_name?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
           item_name: string
           item_type?: string
+          minimum_stock?: number | null
           short_code?: string | null
           store_id: string
           updated_at?: string
@@ -509,12 +639,15 @@ export type Database = {
           category?: string
           created_at?: string
           created_by?: string
+          current_stock?: number | null
           default_unit?: string | null
           english_name?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
           item_name?: string
           item_type?: string
+          minimum_stock?: number | null
           short_code?: string | null
           store_id?: string
           updated_at?: string
@@ -729,6 +862,69 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_requests: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          id: string
+          item_id: string | null
+          item_name: string
+          notes: string | null
+          quantity: number
+          requested_by: string
+          status: string
+          store_id: string
+          supplier: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_name: string
+          notes?: string | null
+          quantity?: number
+          requested_by: string
+          status?: string
+          store_id: string
+          supplier?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_name?: string
+          notes?: string | null
+          quantity?: number
+          requested_by?: string
+          status?: string
+          store_id?: string
+          supplier?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           created_at: string
@@ -873,6 +1069,60 @@ export type Database = {
           },
         ]
       }
+      shift_swaps: {
+        Row: {
+          accepter_id: string | null
+          approved_by: string | null
+          chat_message_id: string | null
+          created_at: string
+          id: string
+          requester_id: string
+          shift_id: string
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          accepter_id?: string | null
+          approved_by?: string | null
+          chat_message_id?: string | null
+          created_at?: string
+          id?: string
+          requester_id: string
+          shift_id: string
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          accepter_id?: string | null
+          approved_by?: string | null
+          chat_message_id?: string | null
+          created_at?: string
+          id?: string
+          requester_id?: string
+          shift_id?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_swaps_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_swaps_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shift_templates: {
         Row: {
           break_minutes: number
@@ -989,8 +1239,11 @@ export type Database = {
         Row: {
           address: string | null
           brand_id: string
+          checkin_radius_meters: number | null
           created_at: string
           id: string
+          latitude: number | null
+          longitude: number | null
           name: string
           organization_id: string
           phone: string | null
@@ -999,8 +1252,11 @@ export type Database = {
         Insert: {
           address?: string | null
           brand_id: string
+          checkin_radius_meters?: number | null
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name: string
           organization_id: string
           phone?: string | null
@@ -1009,8 +1265,11 @@ export type Database = {
         Update: {
           address?: string | null
           brand_id?: string
+          checkin_radius_meters?: number | null
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           organization_id?: string
           phone?: string | null

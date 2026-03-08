@@ -1,14 +1,24 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Paperclip, Smile, ArrowLeft, Pin, Hash, Users, Search, X } from 'lucide-react';
+import { Send, Paperclip, Smile, ArrowLeft, Pin, Hash, Users, Search, X, Check, CheckCheck } from 'lucide-react';
 import RoleBadge from '@/components/common/RoleBadge';
 import ProfileCard from '@/components/profile/ProfileCard';
+import MentionDropdown from '@/components/chat/MentionDropdown';
+import PinnedMessage from '@/components/chat/PinnedMessage';
+import FilePreview from '@/components/chat/FilePreview';
 import type { ChatRoom, ChatMessage } from '@/hooks/useChat';
+import type { MentionMember } from '@/components/chat/MentionDropdown';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const formatMessageTime = (dateStr: string) => format(new Date(dateStr), 'a h:mm', { locale: ko });
 
@@ -19,6 +29,32 @@ const formatDateDivider = (dateStr: string) => {
   return format(d, 'yyyy년 M월 d일 EEEE', { locale: ko });
 };
 
+// Render message content with highlighted @mentions
+const renderContent = (content: string, members: MentionMember[]) => {
+  if (!members.length) return content;
+
+  const parts: (string | JSX.Element)[] = [];
+  let remaining = content;
+  let key = 0;
+
+  for (const member of members) {
+    const mentionText = `@${member.full_name}`;
+    const idx = remaining.indexOf(mentionText);
+    if (idx !== -1) {
+      if (idx > 0) parts.push(remaining.slice(0, idx));
+      parts.push(
+        <span key={key++} className="text-primary font-semibold bg-primary/10 rounded px-0.5">
+          {mentionText}
+        </span>
+      );
+      remaining = remaining.slice(idx + mentionText.length);
+    }
+  }
+  if (remaining) parts.push(remaining);
+
+  return parts.length > 0 ? <>{parts}</> : content;
+};
+
 interface ChatMessageAreaProps {
   room: ChatRoom | undefined;
   messages: ChatMessage[];
@@ -26,12 +62,18 @@ interface ChatMessageAreaProps {
   currentUserId: string | undefined;
   message: string;
   onMessageChange: (val: string) => void;
-  onSend: () => void;
+  onSend: (mentionedUserIds?: string[]) => void;
   isSending: boolean;
   onBack?: () => void;
   showBackButton?: boolean;
   searchQuery: string;
   onSearchQueryChange: (val: string) => void;
+  members?: MentionMember[];
+  pinnedMessage?: ChatMessage;
+  onPinMessage?: (messageId: string | null) => void;
+  canPin?: boolean;
+  onFileUpload?: (file: File) => void;
+  isUploading?: boolean;
 }
 
 const ChatMessageArea = ({
@@ -47,32 +89,83 @@ const ChatMessageArea = ({
   showBackButton,
   searchQuery,
   onSearchQueryChange,
+  members = [],
+  pinnedMessage,
+  onPinMessage,
+  canPin,
+  onFileUpload,
+  isUploading,
 }: ChatMessageAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [showMentions, setShowMentions] = useState(false);
+  const [pendingMentions, setPendingMentions] = useState<string[]>([]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handleInputChange = (val: string) => {
+    onMessageChange(val);
+
+    // Detect @mention typing
+    const lastAt = val.lastIndexOf('@');
+    if (lastAt !== -1) {
+      const afterAt = val.slice(lastAt + 1);
+      // Only show if no space after the partial name
+      if (!afterAt.includes(' ') || afterAt.length === 0) {
+        setMentionQuery(afterAt);
+        setShowMentions(true);
+        return;
+      }
+    }
+    setShowMentions(false);
+    setMentionQuery('');
+  };
+
+  const handleMentionSelect = (member: MentionMember) => {
+    const lastAt = message.lastIndexOf('@');
+    const newMessage = message.slice(0, lastAt) + `@${member.full_name} `;
+    onMessageChange(newMessage);
+    setPendingMentions((prev) => [...prev, member.user_id]);
+    setShowMentions(false);
+    setMentionQuery('');
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSend();
+      handleSend();
     }
+  };
+
+  const handleSend = () => {
+    if (!message.trim()) return;
+    // Also detect mentions from final message content
+    const allMentions = [...new Set(pendingMentions)];
+    onSend(allMentions.length > 0 ? allMentions : undefined);
+    setPendingMentions([]);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onFileUpload) {
+      onFileUpload(file);
+    }
+    e.target.value = '';
   };
 
   const filteredMessages = searchQuery
     ? messages.filter((m) => m.content.toLowerCase().includes(searchQuery.toLowerCase()))
     : messages;
 
-  // Group consecutive messages from the same sender
   const shouldShowHeader = (msg: ChatMessage, index: number) => {
     if (index === 0) return true;
     const prev = messages[index - 1];
     if (prev.sender_id !== msg.sender_id) return true;
     if (prev.message_type === 'system') return true;
-    // Show header if gap > 5 min
     const timeDiff = new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime();
     return timeDiff > 5 * 60 * 1000;
   };
@@ -116,6 +209,7 @@ const ChatMessageArea = ({
             <h2 className="text-sm font-semibold leading-tight">{room.name}</h2>
             <p className="text-[11px] text-muted-foreground">
               {room.type === 'announcement' ? '공지 채널' : '그룹 채팅'}
+              {members.length > 0 && ` · ${members.length}명`}
             </p>
           </div>
         </div>
@@ -150,6 +244,13 @@ const ChatMessageArea = ({
           </Button>
         </div>
       )}
+
+      {/* Pinned message */}
+      <PinnedMessage
+        message={pinnedMessage}
+        onUnpin={() => onPinMessage?.(null)}
+        canUnpin={!!canPin}
+      />
 
       {/* Messages */}
       <ScrollArea className="flex-1">
@@ -200,63 +301,11 @@ const ChatMessageArea = ({
                     </div>
                   ) : (
                     /* Slack-style message row */
-                    <div className={`group flex gap-2.5 px-1 py-0.5 rounded-md hover:bg-muted/30 transition-colors ${showHeader ? 'mt-3' : ''}`}>
-                      {/* Avatar column */}
-                      <div className="w-9 shrink-0 pt-0.5">
-                        {showHeader && !isMine ? (
-                          <ProfileCard
-                            name={msg.sender_name ?? '알 수 없음'}
-                            role={senderProfile?.position}
-                            imageUrl={senderProfile?.profile_image_url}
-                            phone={senderProfile?.phone}
-                            bio={senderProfile?.bio}
-                            status={senderProfile?.status}
-                          >
-                            <button className="cursor-pointer">
-                              <div className="relative">
-                                <Avatar className="w-9 h-9 border border-border">
-                                  <AvatarImage src={senderProfile?.profile_image_url ?? undefined} className="object-cover" />
-                                  <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                                    {(msg.sender_name ?? '?').slice(0, 1)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                {senderProfile?.status && senderProfile.status !== 'offline' && (
-                                  <span
-                                    className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background"
-                                    style={{
-                                      backgroundColor:
-                                        senderProfile.status === 'working'
-                                          ? '#22c55e'
-                                          : senderProfile.status === 'vacation'
-                                          ? '#eab308'
-                                          : '#f97316',
-                                    }}
-                                  />
-                                )}
-                              </div>
-                            </button>
-                          </ProfileCard>
-                        ) : showHeader && isMine ? (
-                          <div className="relative">
-                            <Avatar className="w-9 h-9 border border-border">
-                              <AvatarImage src={senderProfile?.profile_image_url ?? undefined} className="object-cover" />
-                              <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                                {(msg.sender_name ?? '?').slice(0, 1)}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-                        ) : (
-                          /* Timestamp on hover for grouped messages */
-                          <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity pt-1 text-center block">
-                            {format(new Date(msg.created_at), 'HH:mm')}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Content column */}
-                      <div className="flex-1 min-w-0">
-                        {showHeader && (
-                          <div className="flex items-baseline gap-2 mb-0.5">
+                    <DropdownMenu>
+                      <div className={`group flex gap-2.5 px-1 py-0.5 rounded-md hover:bg-muted/30 transition-colors ${showHeader ? 'mt-3' : ''}`}>
+                        {/* Avatar column */}
+                        <div className="w-9 shrink-0 pt-0.5">
+                          {showHeader && !isMine ? (
                             <ProfileCard
                               name={msg.sender_name ?? '알 수 없음'}
                               role={senderProfile?.position}
@@ -265,21 +314,104 @@ const ChatMessageArea = ({
                               bio={senderProfile?.bio}
                               status={senderProfile?.status}
                             >
-                              <button className="text-sm font-semibold hover:underline cursor-pointer text-foreground">
-                                {msg.sender_name}
+                              <button className="cursor-pointer">
+                                <div className="relative">
+                                  <Avatar className="w-9 h-9 border border-border">
+                                    <AvatarImage src={senderProfile?.profile_image_url ?? undefined} className="object-cover" />
+                                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+                                      {(msg.sender_name ?? '?').slice(0, 1)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  {senderProfile?.status && senderProfile.status !== 'offline' && (
+                                    <span
+                                      className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background"
+                                      style={{
+                                        backgroundColor:
+                                          senderProfile.status === 'working'
+                                            ? 'hsl(var(--success))'
+                                            : senderProfile.status === 'vacation'
+                                            ? 'hsl(var(--warning))'
+                                            : 'hsl(var(--accent))',
+                                      }}
+                                    />
+                                  )}
+                                </div>
                               </button>
                             </ProfileCard>
-                            <RoleBadge role={senderProfile?.position} className="text-[9px] px-1.5 py-0" />
-                            <span className="text-[11px] text-muted-foreground">
-                              {formatMessageTime(msg.created_at)}
+                          ) : showHeader && isMine ? (
+                            <div className="relative">
+                              <Avatar className="w-9 h-9 border border-border">
+                                <AvatarImage src={senderProfile?.profile_image_url ?? undefined} className="object-cover" />
+                                <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+                                  {(msg.sender_name ?? '?').slice(0, 1)}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity pt-1 text-center block">
+                              {format(new Date(msg.created_at), 'HH:mm')}
                             </span>
+                          )}
+                        </div>
+
+                        {/* Content column */}
+                        <div className="flex-1 min-w-0">
+                          {showHeader && (
+                            <div className="flex items-baseline gap-2 mb-0.5">
+                              <ProfileCard
+                                name={msg.sender_name ?? '알 수 없음'}
+                                role={senderProfile?.position}
+                                imageUrl={senderProfile?.profile_image_url}
+                                phone={senderProfile?.phone}
+                                bio={senderProfile?.bio}
+                                status={senderProfile?.status}
+                              >
+                                <button className="text-sm font-semibold hover:underline cursor-pointer text-foreground">
+                                  {msg.sender_name}
+                                </button>
+                              </ProfileCard>
+                              <RoleBadge role={senderProfile?.position} className="text-[9px] px-1.5 py-0" />
+                              <span className="text-[11px] text-muted-foreground">
+                                {formatMessageTime(msg.created_at)}
+                              </span>
+                            </div>
+                          )}
+                          <p className="text-sm text-foreground leading-relaxed break-words whitespace-pre-wrap">
+                            {renderContent(msg.content, members)}
+                          </p>
+
+                          {/* File preview */}
+                          {msg.file_url && msg.file_name && msg.file_type && (
+                            <FilePreview fileUrl={msg.file_url} fileName={msg.file_name} fileType={msg.file_type} />
+                          )}
+
+                          {/* Read receipt */}
+                          {isMine && (msg.read_count ?? 0) > 0 && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <CheckCheck className="w-3 h-3 text-primary" />
+                              <span className="text-[10px] text-muted-foreground">읽음 {msg.read_count}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Pin action (on hover) */}
+                        {canPin && (
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <Pin className="w-3 h-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
                           </div>
                         )}
-                        <p className="text-sm text-foreground leading-relaxed break-words whitespace-pre-wrap">
-                          {msg.content}
-                        </p>
                       </div>
-                    </div>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onPinMessage?.(msg.id)}>
+                          <Pin className="w-3.5 h-3.5 mr-2" />
+                          메시지 고정
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               );
@@ -291,28 +423,46 @@ const ChatMessageArea = ({
 
       {/* Input area */}
       <div className="px-4 py-3 border-t border-border">
-        <div className="flex items-end gap-2 bg-muted/40 rounded-xl border border-border px-3 py-2 focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
-            <Paperclip className="w-4 h-4" />
-          </Button>
-          <Input
-            placeholder={`#${room.name}에 메시지 보내기`}
-            value={message}
-            onChange={(e) => onMessageChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 border-0 bg-transparent focus-visible:ring-0 px-0 text-sm min-h-[32px]"
+        <div className="relative">
+          <MentionDropdown
+            members={members}
+            query={mentionQuery}
+            onSelect={handleMentionSelect}
+            visible={showMentions}
           />
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
-            <Smile className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            className="h-8 w-8 shrink-0 rounded-lg"
-            onClick={onSend}
-            disabled={!message.trim() || isSending}
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+          <div className="flex items-end gap-2 bg-muted/40 rounded-xl border border-border px-3 py-2 focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              <Paperclip className="w-4 h-4" />
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+              onChange={handleFileSelect}
+            />
+            <Input
+              placeholder={`#${room.name}에 메시지 보내기 (@로 멘션)`}
+              value={message}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex-1 border-0 bg-transparent focus-visible:ring-0 px-0 text-sm min-h-[32px]"
+            />
+            <Button
+              size="icon"
+              className="h-8 w-8 shrink-0 rounded-lg"
+              onClick={handleSend}
+              disabled={!message.trim() || isSending || isUploading}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
