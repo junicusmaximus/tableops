@@ -8,15 +8,40 @@ export interface NotificationPreference {
   enable_all: boolean;
   enable_leave_request: boolean;
   enable_leave_result: boolean;
+  enable_schedule_new: boolean;
+  enable_schedule_change: boolean;
+  enable_checklist: boolean;
+  enable_inventory: boolean;
+  enable_document_sign: boolean;
+  enable_announcement: boolean;
   updated_at: string;
 }
 
+export type NotifPrefField = keyof Pick<
+  NotificationPreference,
+  | 'enable_all'
+  | 'enable_leave_request'
+  | 'enable_leave_result'
+  | 'enable_schedule_new'
+  | 'enable_schedule_change'
+  | 'enable_checklist'
+  | 'enable_inventory'
+  | 'enable_document_sign'
+  | 'enable_announcement'
+>;
+
 const db = supabase as any;
 
-const DEFAULTS = {
+const DEFAULTS: Record<NotifPrefField, boolean> = {
   enable_all: true,
   enable_leave_request: true,
   enable_leave_result: true,
+  enable_schedule_new: true,
+  enable_schedule_change: true,
+  enable_checklist: true,
+  enable_inventory: true,
+  enable_document_sign: true,
+  enable_announcement: true,
 };
 
 export const useNotificationPreferences = () => {
@@ -43,7 +68,7 @@ export const useUpdateNotificationPreferences = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (updates: Partial<Pick<NotificationPreference, 'enable_all' | 'enable_leave_request' | 'enable_leave_result'>>) => {
+    mutationFn: async (updates: Partial<Record<NotifPrefField, boolean>>) => {
       if (!user) throw new Error('Not authenticated');
 
       const { data: existing } = await db

@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
-import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { useNotificationPreferences, useUpdateNotificationPreferences, type NotifPrefField } from '@/hooks/useNotificationPreferences';
 
 const Settings = () => {
   const { data: profile } = useEmployeeProfile();
@@ -21,11 +22,10 @@ const Settings = () => {
   const { data: notifPrefs } = useNotificationPreferences();
   const updatePrefs = useUpdateNotificationPreferences();
 
-  const enableAll = notifPrefs?.enable_all ?? true;
-  const enableLeaveRequest = notifPrefs?.enable_leave_request ?? true;
-  const enableLeaveResult = notifPrefs?.enable_leave_result ?? true;
+  const pref = (field: NotifPrefField) => notifPrefs?.[field] ?? true;
+  const enableAll = pref('enable_all');
 
-  const handleToggle = (field: 'enable_all' | 'enable_leave_request' | 'enable_leave_result', value: boolean) => {
+  const handleToggle = (field: NotifPrefField, value: boolean) => {
     updatePrefs.mutate(
       { [field]: value },
       {
@@ -47,6 +47,36 @@ const Settings = () => {
     toast({ title: '연결 테스트', description: `${name} 연동은 현재 MVP 버전에서 지원되지 않습니다. 추후 업데이트에서 지원 예정입니다.` });
   };
 
+  const ToggleRow = ({ field, label, description, disabled, managerOnly }: {
+    field: NotifPrefField;
+    label: string;
+    description: string;
+    disabled?: boolean;
+    managerOnly?: boolean;
+  }) => {
+    if (managerOnly && !isManager) return null;
+    return (
+      <div className="flex items-center justify-between py-1">
+        <div>
+          <p className="text-sm font-medium">{label}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        <Switch
+          checked={pref(field)}
+          onCheckedChange={(v) => handleToggle(field, v)}
+          disabled={disabled || !enableAll}
+        />
+      </div>
+    );
+  };
+
+  const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
+    <div className="flex items-center gap-2 pt-2 pb-1">
+      <Icon className="w-4 h-4 text-muted-foreground" />
+      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{title}</span>
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -65,9 +95,10 @@ const Settings = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">알림 설정</CardTitle>
-              <CardDescription>알림 수신 여부를 설정합니다</CardDescription>
+              <CardDescription>알림 수신 여부를 카테고리별로 설정합니다</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-4">
+              {/* Master toggle */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">전체 알림 받기</p>
@@ -79,31 +110,73 @@ const Settings = () => {
                 />
               </div>
 
-              {isManager && (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">휴가 신청 알림 받기</p>
-                    <p className="text-xs text-muted-foreground">직원이 휴가를 신청하면 알림을 받습니다</p>
-                  </div>
-                  <Switch
-                    checked={enableLeaveRequest}
-                    onCheckedChange={(v) => handleToggle('enable_leave_request', v)}
-                    disabled={!enableAll}
-                  />
-                </div>
-              )}
+              <Separator />
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">휴가 승인/반려 결과 알림 받기</p>
-                  <p className="text-xs text-muted-foreground">내 휴가 신청 결과를 알림으로 받습니다</p>
-                </div>
-                <Switch
-                  checked={enableLeaveResult}
-                  onCheckedChange={(v) => handleToggle('enable_leave_result', v)}
-                  disabled={!enableAll}
-                />
-              </div>
+              {/* Leave */}
+              <SectionHeader icon={Bell} title="휴가" />
+              <ToggleRow
+                field="enable_leave_request"
+                label="휴가 신청 알림 받기"
+                description="직원이 휴가를 신청하면 알림을 받습니다"
+                managerOnly
+              />
+              <ToggleRow
+                field="enable_leave_result"
+                label="휴가 승인/반려 결과 알림 받기"
+                description="내 휴가 신청 결과를 알림으로 받습니다"
+              />
+
+              <Separator />
+
+              {/* Schedule */}
+              <SectionHeader icon={CalendarDays} title="스케줄" />
+              <ToggleRow
+                field="enable_schedule_new"
+                label="새 스케줄 등록 알림 받기"
+                description="내 스케줄이 새로 등록되면 알림을 받습니다"
+              />
+              <ToggleRow
+                field="enable_schedule_change"
+                label="스케줄 변경 알림 받기"
+                description="내 스케줄이 변경되면 알림을 받습니다"
+              />
+
+              <Separator />
+
+              {/* Operations */}
+              <SectionHeader icon={ClipboardCheck} title="운영" />
+              <ToggleRow
+                field="enable_checklist"
+                label="체크리스트 알림 받기"
+                description="체크리스트 관련 알림을 받습니다"
+                managerOnly
+              />
+              <ToggleRow
+                field="enable_inventory"
+                label="재고 / 발주 알림 받기"
+                description="재고 부족, 발주 관련 알림을 받습니다"
+                managerOnly
+              />
+
+              <Separator />
+
+              {/* Documents */}
+              <SectionHeader icon={FileText} title="서류" />
+              <ToggleRow
+                field="enable_document_sign"
+                label="서류 서명 요청 알림 받기"
+                description="서명이 필요한 서류가 있을 때 알림을 받습니다"
+              />
+
+              <Separator />
+
+              {/* Announcements */}
+              <SectionHeader icon={Megaphone} title="공지" />
+              <ToggleRow
+                field="enable_announcement"
+                label="공지사항 알림 받기"
+                description="새 공지사항이 등록되면 알림을 받습니다"
+              />
             </CardContent>
           </Card>
         </TabsContent>
