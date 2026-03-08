@@ -209,7 +209,7 @@ const Ingredients = () => {
               <DialogContent>
                 <DialogHeader><DialogTitle>제조 품목 등록</DialogTitle></DialogHeader>
                 <div className="space-y-3 pt-2">
-                  <div><Label>품목명 *</Label><Input value={prepForm.name} onChange={e => setPrepForm({ ...prepForm, name: e.target.value })} placeholder="예: 허머스" /></div>
+                  <div><Label>품목명 *</Label><ItemAutocomplete storeId={null} value={prepForm.name} onChange={v => setPrepForm({ ...prepForm, name: v })} typeFilter="prep" placeholder="품목명, 약어코드로 검색..." allowQuickCreate={true} /></div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>제조시간</Label><Input type="time" value={prepForm.prepTime} onChange={e => setPrepForm({ ...prepForm, prepTime: e.target.value })} /></div>
                     <div><Label>담당자 *</Label><Input value={prepForm.assignee} onChange={e => setPrepForm({ ...prepForm, assignee: e.target.value })} placeholder="예: 김주방" /></div>
