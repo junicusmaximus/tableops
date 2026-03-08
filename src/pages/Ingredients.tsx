@@ -201,8 +201,7 @@ const Ingredients = () => {
           {/* toolbar */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="품목명 또는 담당자 검색..." className="pl-9" value={prepSearch} onChange={e => setPrepSearch(e.target.value)} />
+              <ItemAutocomplete storeId={null} value={prepSearch} onChange={setPrepSearch} typeFilter="prep" placeholder="품목명, 약어코드, 담당자 검색..." allowQuickCreate={false} />
             </div>
             <Dialog open={prepAddOpen} onOpenChange={setPrepAddOpen}>
               <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" />제조 등록</Button></DialogTrigger>
