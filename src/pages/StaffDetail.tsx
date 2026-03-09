@@ -316,6 +316,7 @@ const StaffDetail = () => {
 
       {/* Work history - only for linked employees */}
       {!isPending && (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Attendance */}
           <Card>
