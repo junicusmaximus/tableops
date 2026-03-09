@@ -126,7 +126,7 @@ export const useAddStaff = () => {
           phone: input.phone ?? null,
           position: input.role ?? input.position ?? 'hall_staff',
           employment_type: input.employment_type ?? 'full_time',
-          hire_date: input.hire_date ?? null,
+          hire_date: input.hire_date || null,
           store_id: profile.store_id,
           brand_id: profile.brand_id,
           organization_id: profile.organization_id,
