@@ -179,6 +179,15 @@ const StaffDetail = () => {
   const { data: staff, isLoading } = useStaffDetail(id);
   const { data: attendance = [] } = useStaffAttendance(staff?.user_id ?? null, staff?.store_id);
   const { data: shifts = [] } = useStaffShifts(staff?.user_id ?? null, staff?.store_id);
+  const { data: leaveRequests = [] } = useStaffLeave(staff?.user_id ?? null, staff?.store_id);
+
+  const currentYear = new Date().getFullYear();
+  const thisYearLeaves = leaveRequests.filter(l => l.status === 'approved' && l.start_date.startsWith(String(currentYear)));
+  const usedLeaveDays = thisYearLeaves.reduce((sum, l) => {
+    const days = differenceInCalendarDays(parseISO(l.end_date), parseISO(l.start_date)) + 1;
+    return sum + (l.leave_type === '반차' ? 0.5 : days);
+  }, 0);
+  const remainingLeave = DEFAULT_ANNUAL_LEAVE - usedLeaveDays;
 
   if (!isManager) {
     return (
