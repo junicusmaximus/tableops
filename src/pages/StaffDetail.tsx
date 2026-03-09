@@ -97,6 +97,37 @@ const useStaffShifts = (userId: string | null, storeId: string | undefined) => {
   });
 };
 
+const LEAVE_TYPE_LABELS: Record<string, string> = {
+  '연차': '연차', '반차': '반차', '병가': '병가', '경조사': '경조사', '기타': '기타',
+};
+
+const LEAVE_STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  pending: { label: '대기', variant: 'outline' },
+  approved: { label: '승인', variant: 'default' },
+  rejected: { label: '반려', variant: 'destructive' },
+};
+
+const DEFAULT_ANNUAL_LEAVE = 15;
+
+const useStaffLeave = (userId: string | null, storeId: string | undefined) => {
+  return useQuery({
+    queryKey: ['staff-leave', userId, storeId],
+    queryFn: async () => {
+      if (!userId || !storeId) return [];
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('applicant_user_id', userId)
+        .eq('store_id', storeId)
+        .order('start_date', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!userId && !!storeId,
+  });
+};
+
 const InviteStatusDisplay = ({ status }: { status: string }) => {
   const label = INVITE_STATUS_LABELS[status] ?? status;
   if (status === 'pending') {
