@@ -184,7 +184,7 @@ const StaffManagement = () => {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((s) => (
-                    <TableRow key={s.id} className={s.invite_status === 'pending' ? 'opacity-75' : ''}>
+                    <TableRow key={s.id} className={`cursor-pointer hover:bg-muted/50 ${s.invite_status === 'pending' ? 'opacity-75' : ''}`} onClick={() => navigate(`/staff/${s.id}`)}>
                       <TableCell className="font-medium">
                         <div>
                           {s.full_name}
