@@ -14,9 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   ArrowLeft, Phone, Briefcase, CalendarDays, Clock, CheckCircle2,
-  XCircle, ShieldAlert, User, Link2, Link2Off
+  XCircle, ShieldAlert, User, Link2, Link2Off, Palmtree
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 const EMPLOYMENT_TYPES: Record<string, string> = {
