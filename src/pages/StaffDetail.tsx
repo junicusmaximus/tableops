@@ -403,6 +403,76 @@ const StaffDetail = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Leave Summary & History */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Palmtree className="w-4 h-4" />
+                휴가 현황 ({currentYear}년)
+              </CardTitle>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">사용</p>
+                  <p className="font-bold text-primary">{usedLeaveDays}일</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">잔여</p>
+                  <p className={`font-bold ${remainingLeave <= 3 ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                    {remainingLeave}일
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">총 부여</p>
+                  <p className="font-bold text-muted-foreground">{DEFAULT_ANNUAL_LEAVE}일</p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {leaveRequests.length === 0 ? (
+              <p className="text-sm text-muted-foreground p-6 text-center">휴가 사용 내역이 없습니다.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>기간</TableHead>
+                      <TableHead>유형</TableHead>
+                      <TableHead>일수</TableHead>
+                      <TableHead>사유</TableHead>
+                      <TableHead>상태</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leaveRequests.map((l) => {
+                      const days = differenceInCalendarDays(parseISO(l.end_date), parseISO(l.start_date)) + 1;
+                      const displayDays = l.leave_type === '반차' ? 0.5 : days;
+                      const statusInfo = LEAVE_STATUS_LABELS[l.status] ?? { label: l.status, variant: 'outline' as const };
+                      return (
+                        <TableRow key={l.id}>
+                          <TableCell className="text-xs">
+                            {formatDate(l.start_date)}
+                            {l.start_date !== l.end_date && ` ~ ${formatDate(l.end_date)}`}
+                          </TableCell>
+                          <TableCell className="text-xs">{LEAVE_TYPE_LABELS[l.leave_type] ?? l.leave_type}</TableCell>
+                          <TableCell className="text-xs">{displayDays}일</TableCell>
+                          <TableCell className="text-xs max-w-[150px] truncate">{l.reason ?? '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={statusInfo.variant} className="text-[10px] px-1.5 py-0">
+                              {statusInfo.label}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
