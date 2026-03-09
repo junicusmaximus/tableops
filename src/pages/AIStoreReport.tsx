@@ -82,30 +82,17 @@ const AIStoreReport = () => {
     }
     setLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
+      const { data: result, error: fnError } = await supabase.functions.invoke('ai-store-report', {
+        body: {
+          store_id: profile.store_id,
+          report_type: reportType,
+        },
+      });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-store-report`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            store_id: profile.store_id,
-            report_type: reportType,
-          }),
-        }
-      );
+      if (fnError) throw fnError;
+      if (result?.error) throw new Error(result.error);
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed');
-      }
-
-      const data: AIReport = await response.json();
+      const data: AIReport = result;
       setReport(data);
     } catch (err: any) {
       toast.error(err.message || 'AI 리포트 생성에 실패했습니다');
