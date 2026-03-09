@@ -117,36 +117,24 @@ const AIScheduleRecommend = () => {
 
     try {
       const { start, end } = getDateRange();
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-schedule-recommend`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            store_id: profile.store_id,
-            start_date: start,
-            end_date: end,
-            roles_needed: { hall: hallCount, kitchen: kitchenCount },
-            consider_peak: considerPeak,
-            reflect_leave: reflectLeave,
-            include_parttime: includeParttime,
-            max_hours_limit: maxHoursLimit,
-          }),
-        }
-      );
+      const { data: result, error: fnError } = await supabase.functions.invoke('ai-schedule-recommend', {
+        body: {
+          store_id: profile.store_id,
+          start_date: start,
+          end_date: end,
+          roles_needed: { hall: hallCount, kitchen: kitchenCount },
+          consider_peak: considerPeak,
+          reflect_leave: reflectLeave,
+          include_parttime: includeParttime,
+          max_hours_limit: maxHoursLimit,
+        },
+      });
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed');
-      }
+      if (fnError) throw fnError;
+      if (result?.error) throw new Error(result.error);
 
-      const data: Recommendation = await response.json();
+      const data: Recommendation = result;
       setRecommendation(data);
 
       // Select all shifts by default
