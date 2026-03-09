@@ -13,6 +13,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import TodayBriefing from "@/pages/TodayBriefing";
 import StaffManagement from "@/pages/StaffManagement";
+import StaffDetail from "@/pages/StaffDetail";
 import Attendance from "@/pages/Attendance";
 import MySchedule from "@/pages/MySchedule";
 import ScheduleManagement from "@/pages/ScheduleManagement";
@@ -79,6 +80,7 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="today-briefing" element={<TodayBriefing />} />
               <Route path="staff" element={<StaffManagement />} />
+              <Route path="staff/:id" element={<StaffDetail />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="schedule" element={<MySchedule />} />
               <Route path="schedule-management" element={<ScheduleManagement />} />

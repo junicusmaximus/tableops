@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStaffList, useAddStaff, useUpdateStaff, StaffMember, INVITE_STATUS_LABELS, EMPLOYEE_STATUS_LABELS } from '@/hooks/useStaff';
 import { ROLE_LABELS, AppRole, useIsManager } from '@/hooks/useUserRole';
 import RoleBadge from '@/components/common/RoleBadge';
@@ -46,6 +47,7 @@ const InviteStatusBadge = ({ status }: { status: string }) => {
 };
 
 const StaffManagement = () => {
+  const navigate = useNavigate();
   const { data: staff = [], isLoading } = useStaffList();
   const addStaff = useAddStaff();
   const isManager = useIsManager();
@@ -182,7 +184,7 @@ const StaffManagement = () => {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((s) => (
-                    <TableRow key={s.id} className={s.invite_status === 'pending' ? 'opacity-75' : ''}>
+                    <TableRow key={s.id} className={`cursor-pointer hover:bg-muted/50 ${s.invite_status === 'pending' ? 'opacity-75' : ''}`} onClick={() => navigate(`/staff/${s.id}`)}>
                       <TableCell className="font-medium">
                         <div>
                           {s.full_name}
