@@ -14,9 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   ArrowLeft, Phone, Briefcase, CalendarDays, Clock, CheckCircle2,
-  XCircle, ShieldAlert, User, Link2, Link2Off
+  XCircle, ShieldAlert, User, Link2, Link2Off, Palmtree
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 const EMPLOYMENT_TYPES: Record<string, string> = {
@@ -97,6 +97,37 @@ const useStaffShifts = (userId: string | null, storeId: string | undefined) => {
   });
 };
 
+const LEAVE_TYPE_LABELS: Record<string, string> = {
+  '연차': '연차', '반차': '반차', '병가': '병가', '경조사': '경조사', '기타': '기타',
+};
+
+const LEAVE_STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  pending: { label: '대기', variant: 'outline' },
+  approved: { label: '승인', variant: 'default' },
+  rejected: { label: '반려', variant: 'destructive' },
+};
+
+const DEFAULT_ANNUAL_LEAVE = 15;
+
+const useStaffLeave = (userId: string | null, storeId: string | undefined) => {
+  return useQuery({
+    queryKey: ['staff-leave', userId, storeId],
+    queryFn: async () => {
+      if (!userId || !storeId) return [];
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('applicant_user_id', userId)
+        .eq('store_id', storeId)
+        .order('start_date', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!userId && !!storeId,
+  });
+};
+
 const InviteStatusDisplay = ({ status }: { status: string }) => {
   const label = INVITE_STATUS_LABELS[status] ?? status;
   if (status === 'pending') {
@@ -148,6 +179,15 @@ const StaffDetail = () => {
   const { data: staff, isLoading } = useStaffDetail(id);
   const { data: attendance = [] } = useStaffAttendance(staff?.user_id ?? null, staff?.store_id);
   const { data: shifts = [] } = useStaffShifts(staff?.user_id ?? null, staff?.store_id);
+  const { data: leaveRequests = [] } = useStaffLeave(staff?.user_id ?? null, staff?.store_id);
+
+  const currentYear = new Date().getFullYear();
+  const thisYearLeaves = leaveRequests.filter(l => l.status === 'approved' && l.start_date.startsWith(String(currentYear)));
+  const usedLeaveDays = thisYearLeaves.reduce((sum, l) => {
+    const days = differenceInCalendarDays(parseISO(l.end_date), parseISO(l.start_date)) + 1;
+    return sum + (l.leave_type === '반차' ? 0.5 : days);
+  }, 0);
+  const remainingLeave = DEFAULT_ANNUAL_LEAVE - usedLeaveDays;
 
   if (!isManager) {
     return (
@@ -276,6 +316,7 @@ const StaffDetail = () => {
 
       {/* Work history - only for linked employees */}
       {!isPending && (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Attendance */}
           <Card>
@@ -363,6 +404,77 @@ const StaffDetail = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Leave Summary & History */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Palmtree className="w-4 h-4" />
+                휴가 현황 ({currentYear}년)
+              </CardTitle>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">사용</p>
+                  <p className="font-bold text-primary">{usedLeaveDays}일</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">잔여</p>
+                  <p className={`font-bold ${remainingLeave <= 3 ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                    {remainingLeave}일
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">총 부여</p>
+                  <p className="font-bold text-muted-foreground">{DEFAULT_ANNUAL_LEAVE}일</p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {leaveRequests.length === 0 ? (
+              <p className="text-sm text-muted-foreground p-6 text-center">휴가 사용 내역이 없습니다.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>기간</TableHead>
+                      <TableHead>유형</TableHead>
+                      <TableHead>일수</TableHead>
+                      <TableHead>사유</TableHead>
+                      <TableHead>상태</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leaveRequests.map((l) => {
+                      const days = differenceInCalendarDays(parseISO(l.end_date), parseISO(l.start_date)) + 1;
+                      const displayDays = l.leave_type === '반차' ? 0.5 : days;
+                      const statusInfo = LEAVE_STATUS_LABELS[l.status] ?? { label: l.status, variant: 'outline' as const };
+                      return (
+                        <TableRow key={l.id}>
+                          <TableCell className="text-xs">
+                            {formatDate(l.start_date)}
+                            {l.start_date !== l.end_date && ` ~ ${formatDate(l.end_date)}`}
+                          </TableCell>
+                          <TableCell className="text-xs">{LEAVE_TYPE_LABELS[l.leave_type] ?? l.leave_type}</TableCell>
+                          <TableCell className="text-xs">{displayDays}일</TableCell>
+                          <TableCell className="text-xs max-w-[150px] truncate">{l.reason ?? '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={statusInfo.variant} className="text-[10px] px-1.5 py-0">
+                              {statusInfo.label}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </>
       )}
     </div>
   );
