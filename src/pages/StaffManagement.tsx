@@ -47,6 +47,7 @@ const InviteStatusBadge = ({ status }: { status: string }) => {
 };
 
 const StaffManagement = () => {
+  const navigate = useNavigate();
   const { data: staff = [], isLoading } = useStaffList();
   const addStaff = useAddStaff();
   const isManager = useIsManager();
