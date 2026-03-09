@@ -13,6 +13,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import TodayBriefing from "@/pages/TodayBriefing";
 import StaffManagement from "@/pages/StaffManagement";
+import StaffDetail from "@/pages/StaffDetail";
 import Attendance from "@/pages/Attendance";
 import MySchedule from "@/pages/MySchedule";
 import ScheduleManagement from "@/pages/ScheduleManagement";
