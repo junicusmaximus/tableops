@@ -80,6 +80,7 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="today-briefing" element={<TodayBriefing />} />
               <Route path="staff" element={<StaffManagement />} />
+              <Route path="staff/:id" element={<StaffDetail />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="schedule" element={<MySchedule />} />
               <Route path="schedule-management" element={<ScheduleManagement />} />
