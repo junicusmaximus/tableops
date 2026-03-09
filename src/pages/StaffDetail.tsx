@@ -474,6 +474,7 @@ const StaffDetail = () => {
             )}
           </CardContent>
         </Card>
+        </>
       )}
     </div>
   );
