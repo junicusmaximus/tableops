@@ -479,6 +479,10 @@ export type Database = {
           full_name: string
           hire_date: string | null
           id: string
+          invite_status: string
+          invited_at: string | null
+          invited_by: string | null
+          linked_at: string | null
           organization_id: string
           phone: string | null
           position: string | null
@@ -486,7 +490,7 @@ export type Database = {
           status: string
           store_id: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           bio?: string | null
@@ -496,6 +500,10 @@ export type Database = {
           full_name: string
           hire_date?: string | null
           id?: string
+          invite_status?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          linked_at?: string | null
           organization_id: string
           phone?: string | null
           position?: string | null
@@ -503,7 +511,7 @@ export type Database = {
           status?: string
           store_id: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           bio?: string | null
@@ -513,6 +521,10 @@ export type Database = {
           full_name?: string
           hire_date?: string | null
           id?: string
+          invite_status?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          linked_at?: string | null
           organization_id?: string
           phone?: string | null
           position?: string | null
@@ -520,7 +532,7 @@ export type Database = {
           status?: string
           store_id?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1353,6 +1365,10 @@ export type Database = {
       is_store_member: {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
+      }
+      link_pending_employee: {
+        Args: { _full_name: string; _phone: string; _user_id: string }
+        Returns: Json
       }
     }
     Enums: {

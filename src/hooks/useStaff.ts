@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface StaffMember {
   id: string;
-  user_id: string;
+  user_id: string | null;
   full_name: string;
   phone: string | null;
   position: string | null;
@@ -15,10 +15,28 @@ export interface StaffMember {
   store_id: string;
   brand_id: string;
   organization_id: string;
+  status: string;
+  invite_status: string;
+  invited_at: string | null;
+  linked_at: string | null;
   created_at: string;
   updated_at: string;
   role?: string;
 }
+
+export const INVITE_STATUS_LABELS: Record<string, string> = {
+  pending: '초대 대기',
+  linked: '연결됨',
+  expired: '만료',
+  cancelled: '취소',
+};
+
+export const EMPLOYEE_STATUS_LABELS: Record<string, string> = {
+  active: '활성',
+  inactive: '비활성',
+  offline: '오프라인',
+  pending: '대기',
+};
 
 export const useStaffList = (storeId?: string) => {
   const { data: profile } = useEmployeeProfile();
@@ -35,17 +53,25 @@ export const useStaffList = (storeId?: string) => {
         .order('full_name');
       if (error) throw error;
 
-      // Also fetch roles
-      const userIds = (data ?? []).map((d) => d.user_id);
-      if (userIds.length === 0) return [];
-      const { data: roles } = await supabase
-        .from('user_store_roles')
-        .select('user_id, role')
-        .eq('store_id', sid)
-        .in('user_id', userIds);
+      // Fetch roles for linked employees only
+      const userIds = (data ?? []).filter((d) => d.user_id).map((d) => d.user_id!);
+      let roleMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: roles } = await supabase
+          .from('user_store_roles')
+          .select('user_id, role')
+          .eq('store_id', sid)
+          .in('user_id', userIds);
+        roleMap = new Map((roles ?? []).map((r) => [r.user_id, r.role]));
+      }
 
-      const roleMap = new Map((roles ?? []).map((r) => [r.user_id, r.role]));
-      return (data ?? []).map((d) => ({ ...d, role: roleMap.get(d.user_id) ?? 'hall_staff' })) as StaffMember[];
+      return (data ?? []).map((d) => ({
+        ...d,
+        invite_status: (d as any).invite_status ?? 'linked',
+        invited_at: (d as any).invited_at ?? null,
+        linked_at: (d as any).linked_at ?? null,
+        role: d.user_id ? (roleMap.get(d.user_id) ?? d.position ?? 'hall_staff') : (d.position ?? 'hall_staff'),
+      })) as StaffMember[];
     },
     enabled: !!sid,
   });
@@ -67,37 +93,57 @@ export const useAddStaff = () => {
       role?: string;
     }) => {
       if (!user || !profile) throw new Error('인증이 필요합니다');
-      // Create a placeholder user_id (in real app, would invite via email)
-      const placeholderUserId = crypto.randomUUID();
+
+      // Check for duplicate phone in the same store
+      if (input.phone) {
+        const { data: existing } = await supabase
+          .from('employee_profiles')
+          .select('id, full_name, invite_status, user_id')
+          .eq('store_id', profile.store_id)
+          .eq('phone', input.phone);
+
+        const activeOrLinked = (existing ?? []).find(
+          (e) => e.user_id !== null || (e as any).invite_status === 'linked'
+        );
+        if (activeOrLinked) {
+          throw new Error('이미 연결된 직원 정보가 있습니다.');
+        }
+
+        const pendingDup = (existing ?? []).find(
+          (e) => (e as any).invite_status === 'pending'
+        );
+        if (pendingDup) {
+          throw new Error(`동일한 전화번호로 초대 대기 중인 직원이 있습니다. (${pendingDup.full_name})`);
+        }
+      }
+
+      // Create pending employee record (no user_id needed)
       const { data, error } = await supabase
         .from('employee_profiles')
         .insert({
-          user_id: placeholderUserId,
+          user_id: null as any,
           full_name: input.full_name,
           phone: input.phone ?? null,
-          position: input.position ?? null,
+          position: input.role ?? input.position ?? 'hall_staff',
           employment_type: input.employment_type ?? 'full_time',
           hire_date: input.hire_date ?? null,
           store_id: profile.store_id,
           brand_id: profile.brand_id,
           organization_id: profile.organization_id,
+          status: 'pending',
+          invite_status: 'pending' as any,
+          invited_by: user.id as any,
+          invited_at: new Date().toISOString() as any,
         })
         .select()
         .single();
       if (error) throw error;
 
-      // Assign role
-      await supabase.from('user_store_roles').insert({
-        user_id: placeholderUserId,
-        store_id: profile.store_id,
-        role: (input.role as any) ?? 'hall_staff',
-      });
-
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff-list'] });
-      toast({ title: '직원 추가 완료', description: '새 직원이 등록되었습니다.' });
+      toast({ title: '직원 등록 완료', description: '직원이 초대 대기 상태로 등록되었습니다.' });
     },
     onError: (e: Error) => {
       toast({ title: '직원 추가 실패', description: e.message, variant: 'destructive' });
