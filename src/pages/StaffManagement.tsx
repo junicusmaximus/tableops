@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStaffList, useAddStaff, useUpdateStaff, StaffMember, INVITE_STATUS_LABELS, EMPLOYEE_STATUS_LABELS } from '@/hooks/useStaff';
 import { ROLE_LABELS, AppRole, useIsManager } from '@/hooks/useUserRole';
 import RoleBadge from '@/components/common/RoleBadge';
