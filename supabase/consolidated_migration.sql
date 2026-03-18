@@ -7,17 +7,17 @@
 --
 -- Sections:
 --   1.  Enum Types
---   2.  Helper Functions (Security Definer)
---   3.  Core Tables (organizations, brands, stores)
---   4.  Employee & Role Tables
---   5.  Attendance Tables
---   6.  Chat Tables
---   7.  Sales Tables
---   8.  Shift & Schedule Tables
---   9.  Checklist Tables
---  10.  Reservation Table
---  11.  Inventory Tables
---  12.  Leave & Notification Tables
+--   2.  Core Tables (organizations, brands, stores)
+--   3.  Employee & Role Tables
+--   4.  Attendance Tables
+--   5.  Chat Tables
+--   6.  Sales Tables
+--   7.  Shift & Schedule Tables
+--   8.  Checklist Tables
+--   9.  Reservation Table
+--  10.  Inventory Tables
+--  11.  Leave & Notification Tables
+--  12.  Helper Functions (Security Definer — defined after all tables)
 --  13.  Indexes
 --  14.  Updated_at Trigger Function & Triggers
 --  15.  Validation Triggers
@@ -47,7 +47,430 @@ CREATE TYPE public.app_role AS ENUM (
 
 
 -- =============================================================================
--- 2. HELPER FUNCTIONS (Security Definer — defined before tables that use RLS)
+-- 2. CORE TABLES
+-- =============================================================================
+
+CREATE TABLE public.organizations (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT        NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.brands (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID        NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  name            TEXT        NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- stores gains latitude/longitude/checkin_radius_meters in migration 20260308164958
+CREATE TABLE public.stores (
+  id                      UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  brand_id                UUID        NOT NULL REFERENCES public.brands(id) ON DELETE CASCADE,
+  organization_id         UUID        NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  name                    TEXT        NOT NULL,
+  address                 TEXT,
+  phone                   TEXT,
+  latitude                NUMERIC,
+  longitude               NUMERIC,
+  checkin_radius_meters   INTEGER     DEFAULT 200,
+  created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+-- =============================================================================
+-- 3. EMPLOYEE & ROLE TABLES
+-- =============================================================================
+
+-- employee_profiles gains profile_image_url/bio/status in migration 20260308160323
+-- user_id made nullable and invite columns added in migration 20260309004752
+CREATE TABLE public.employee_profiles (
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id           UUID        REFERENCES auth.users(id) ON DELETE CASCADE,  -- nullable (invite flow)
+  organization_id   UUID        NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  brand_id          UUID        NOT NULL REFERENCES public.brands(id) ON DELETE CASCADE,
+  store_id          UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  full_name         TEXT        NOT NULL,
+  phone             TEXT,
+  position          TEXT,
+  employment_type   TEXT        DEFAULT 'full_time',
+  hire_date         DATE,
+  profile_image_url TEXT,
+  bio               TEXT,
+  status            TEXT        NOT NULL DEFAULT 'offline',
+  invite_status     TEXT        NOT NULL DEFAULT 'linked',
+  invited_by        UUID,
+  invited_at        TIMESTAMPTZ,
+  linked_at         TIMESTAMPTZ,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id, store_id)
+);
+
+CREATE TABLE public.user_store_roles (
+  id         UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID            NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  store_id   UUID            NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  role       public.app_role NOT NULL DEFAULT 'hall_staff',
+  created_at TIMESTAMPTZ     NOT NULL DEFAULT now(),
+  UNIQUE(user_id, store_id)
+);
+
+
+-- =============================================================================
+-- 4. ATTENDANCE TABLES
+-- =============================================================================
+
+-- attendance_logs gains GPS columns in migration 20260308164958
+CREATE TABLE public.attendance_logs (
+  id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  employee_profile_id UUID        NOT NULL REFERENCES public.employee_profiles(id) ON DELETE CASCADE,
+  store_id            UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  user_id             UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  check_in_at         TIMESTAMPTZ,
+  check_out_at        TIMESTAMPTZ,
+  status              TEXT        NOT NULL DEFAULT 'checked_in',
+  is_late             BOOLEAN     DEFAULT false,
+  is_early_leave      BOOLEAN     DEFAULT false,
+  scheduled_start     TIMESTAMPTZ,
+  scheduled_end       TIMESTAMPTZ,
+  work_hours          NUMERIC(5,2),
+  notes               TEXT,
+  date                DATE        NOT NULL DEFAULT CURRENT_DATE,
+  checkin_latitude    NUMERIC,
+  checkin_longitude   NUMERIC,
+  is_outside_radius   BOOLEAN     DEFAULT false,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.break_logs (
+  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  attendance_log_id  UUID        NOT NULL REFERENCES public.attendance_logs(id) ON DELETE CASCADE,
+  start_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  end_at             TIMESTAMPTZ,
+  duration_minutes   NUMERIC(5,1),
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+-- =============================================================================
+-- 5. CHAT TABLES
+-- =============================================================================
+
+-- chat_rooms gains pinned_message_id/pinned_at/pinned_by in migration 20260308164250
+CREATE TABLE public.chat_rooms (
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id          UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  name              TEXT        NOT NULL,
+  type              TEXT        NOT NULL DEFAULT 'group',  -- 'group', 'announcement'
+  created_by        UUID        NOT NULL,
+  pinned_message_id UUID,  -- FK added after chat_messages; set as self-ref below
+  pinned_at         TIMESTAMPTZ,
+  pinned_by         UUID,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.chat_room_members (
+  id        UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id   UUID        NOT NULL REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
+  user_id   UUID        NOT NULL,
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(room_id, user_id)
+);
+
+-- chat_messages gains file_url/file_name/file_type in migration 20260308164250
+CREATE TABLE public.chat_messages (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id      UUID        NOT NULL REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
+  sender_id    UUID        NOT NULL,
+  content      TEXT        NOT NULL,
+  message_type TEXT        NOT NULL DEFAULT 'text',  -- 'text', 'system'
+  file_url     TEXT,
+  file_name    TEXT,
+  file_type    TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Add FK for pinned_message_id now that chat_messages exists
+ALTER TABLE public.chat_rooms
+  ADD CONSTRAINT chat_rooms_pinned_message_id_fkey
+  FOREIGN KEY (pinned_message_id) REFERENCES public.chat_messages(id);
+
+CREATE TABLE public.chat_read_receipts (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id      UUID        NOT NULL REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
+  user_id      UUID        NOT NULL,
+  last_read_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(room_id, user_id)
+);
+
+-- chat_mentions added in migration 20260308164250
+CREATE TABLE public.chat_mentions (
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id        UUID        NOT NULL REFERENCES public.chat_messages(id) ON DELETE CASCADE,
+  mentioned_user_id UUID        NOT NULL,
+  room_id           UUID        NOT NULL REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+-- =============================================================================
+-- 6. SALES TABLES
+-- =============================================================================
+
+CREATE TABLE public.sales_targets (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id      UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  year_month    TEXT        NOT NULL,  -- '2026-03'
+  target_amount NUMERIC     NOT NULL DEFAULT 0,
+  created_by    UUID        NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(store_id, year_month)
+);
+
+CREATE TABLE public.sales_records (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id    UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  date        DATE        NOT NULL DEFAULT CURRENT_DATE,
+  amount      NUMERIC     NOT NULL DEFAULT 0,
+  notes       TEXT,
+  recorded_by UUID        NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(store_id, date)
+);
+
+
+-- =============================================================================
+-- 7. SHIFT & SCHEDULE TABLES
+-- =============================================================================
+
+-- shifts gains assignee_type/manual_* columns and nullable user_id in migration 20260308124338
+CREATE TABLE public.shifts (
+  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id           UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  user_id            UUID,  -- nullable for manual entries
+  shift_date         DATE        NOT NULL,
+  start_time         TIME        NOT NULL,
+  end_time           TIME        NOT NULL,
+  break_minutes      INTEGER     DEFAULT 0,
+  role               TEXT,
+  notes              TEXT,
+  assignee_type      TEXT        NOT NULL DEFAULT 'registered_user',
+  manual_name        TEXT,
+  manual_role_label  TEXT,
+  manual_phone       TEXT,
+  created_by         UUID        NOT NULL,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.shift_templates (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id      UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  name          TEXT        NOT NULL,
+  start_time    TIME        NOT NULL,
+  end_time      TIME        NOT NULL,
+  break_minutes INTEGER     NOT NULL DEFAULT 0,
+  role          TEXT,
+  created_by    UUID        NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- shift_swaps added in migration 20260308164958
+CREATE TABLE public.shift_swaps (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id        UUID        NOT NULL REFERENCES public.stores(id),
+  shift_id        UUID        NOT NULL REFERENCES public.shifts(id) ON DELETE CASCADE,
+  requester_id    UUID        NOT NULL,
+  accepter_id     UUID,
+  status          TEXT        NOT NULL DEFAULT 'pending',
+  approved_by     UUID,
+  chat_message_id UUID,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+-- =============================================================================
+-- 8. CHECKLIST TABLES
+-- =============================================================================
+
+CREATE TABLE public.checklist_templates (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id        UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  checklist_type  TEXT        NOT NULL,
+  title           TEXT        NOT NULL,
+  description     TEXT,
+  assigned_role   TEXT,
+  requires_photo  BOOLEAN     DEFAULT false,
+  sort_order      INTEGER     DEFAULT 0,
+  is_active       BOOLEAN     DEFAULT true,
+  created_by      UUID        NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.checklist_runs (
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_id      UUID        NOT NULL REFERENCES public.checklist_templates(id) ON DELETE CASCADE,
+  store_id         UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  business_date    DATE        NOT NULL DEFAULT CURRENT_DATE,
+  assigned_user_id UUID,
+  completed_by     UUID,
+  completed_at     TIMESTAMPTZ,
+  status           TEXT        NOT NULL DEFAULT 'pending',
+  note             TEXT,
+  photo_url        TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+-- =============================================================================
+-- 9. RESERVATION TABLE
+-- =============================================================================
+
+CREATE TABLE public.reservations (
+  id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id            UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  reservation_source  TEXT        DEFAULT 'manual',
+  customer_name       TEXT        NOT NULL,
+  phone_number        TEXT,
+  reservation_date    DATE        NOT NULL,
+  reservation_time    TIME        NOT NULL,
+  guest_count         INTEGER     NOT NULL DEFAULT 2,
+  seating_area        TEXT,
+  status              TEXT        NOT NULL DEFAULT '예약 확정',
+  memo                TEXT,
+  special_request     TEXT,
+  vip_flag            BOOLEAN     DEFAULT false,
+  created_by          UUID        NOT NULL,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+-- =============================================================================
+-- 10. INVENTORY TABLES
+-- =============================================================================
+
+-- inventory_items gains current_stock/minimum_stock/expiry_date in migration 20260308164652
+CREATE TABLE public.inventory_items (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id        UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  item_name       TEXT        NOT NULL,
+  english_name    TEXT,
+  short_code      TEXT,
+  aliases         TEXT[]      DEFAULT '{}',
+  category        TEXT        NOT NULL DEFAULT '기타',
+  item_type       TEXT        NOT NULL DEFAULT 'raw',
+  default_unit    TEXT        DEFAULT 'kg',
+  current_stock   NUMERIC     DEFAULT 0,
+  minimum_stock   NUMERIC     DEFAULT 0,
+  expiry_date     DATE,
+  is_active       BOOLEAN     NOT NULL DEFAULT true,
+  created_by      UUID        NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.item_usage_history (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID        NOT NULL,
+  store_id    UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  item_id     UUID        NOT NULL REFERENCES public.inventory_items(id) ON DELETE CASCADE,
+  query_text  TEXT,
+  selected_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.purchase_requests (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id     UUID        NOT NULL REFERENCES public.stores(id),
+  item_name    TEXT        NOT NULL,
+  item_id      UUID        REFERENCES public.inventory_items(id),
+  quantity     NUMERIC     NOT NULL DEFAULT 1,
+  unit         TEXT        DEFAULT 'kg',
+  supplier     TEXT,
+  notes        TEXT,
+  requested_by UUID        NOT NULL,
+  approved_by  UUID,
+  status       TEXT        NOT NULL DEFAULT 'pending',
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.inventory_alerts (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id     UUID        NOT NULL REFERENCES public.stores(id),
+  item_id      UUID        NOT NULL REFERENCES public.inventory_items(id) ON DELETE CASCADE,
+  alert_type   TEXT        NOT NULL DEFAULT 'low_stock',
+  message      TEXT        NOT NULL,
+  is_resolved  BOOLEAN     NOT NULL DEFAULT false,
+  resolved_by  UUID,
+  resolved_at  TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+-- =============================================================================
+-- 11. LEAVE & NOTIFICATION TABLES
+-- =============================================================================
+
+CREATE TABLE public.leave_requests (
+  id                UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  applicant_user_id UUID        NOT NULL,
+  store_id          UUID        NOT NULL REFERENCES public.stores(id),
+  approver_user_id  UUID,
+  leave_type        TEXT        NOT NULL DEFAULT '연차',
+  start_date        DATE        NOT NULL,
+  end_date          DATE        NOT NULL,
+  reason            TEXT,
+  status            TEXT        NOT NULL DEFAULT 'pending',
+  rejection_reason  TEXT,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.notifications (
+  id                  UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id             UUID        NOT NULL,
+  type                TEXT        NOT NULL,
+  title               TEXT        NOT NULL,
+  message             TEXT,
+  related_entity_type TEXT,
+  related_entity_id   UUID,
+  is_read             BOOLEAN     NOT NULL DEFAULT false,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by          UUID
+);
+
+-- notification_preferences gains additional enable_* columns in migration 20260308160323
+CREATE TABLE public.notification_preferences (
+  id                      UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id                 UUID        NOT NULL UNIQUE,
+  enable_all              BOOLEAN     NOT NULL DEFAULT true,
+  enable_leave_request    BOOLEAN     NOT NULL DEFAULT true,
+  enable_leave_result     BOOLEAN     NOT NULL DEFAULT true,
+  enable_schedule_new     BOOLEAN     NOT NULL DEFAULT true,
+  enable_schedule_change  BOOLEAN     NOT NULL DEFAULT true,
+  enable_checklist        BOOLEAN     NOT NULL DEFAULT true,
+  enable_inventory        BOOLEAN     NOT NULL DEFAULT true,
+  enable_document_sign    BOOLEAN     NOT NULL DEFAULT true,
+  enable_announcement     BOOLEAN     NOT NULL DEFAULT true,
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+-- =============================================================================
+-- 12. HELPER FUNCTIONS (Security Definer — defined after all tables)
 -- =============================================================================
 
 -- Returns all store IDs the user is assigned to
@@ -161,429 +584,6 @@ AS $$
     SELECT 1 FROM public.user_store_roles WHERE user_id = _user_id AND role IN ('ceo'::app_role, 'owner'::app_role)
   );
 $$;
-
-
--- =============================================================================
--- 3. CORE TABLES
--- =============================================================================
-
-CREATE TABLE public.organizations (
-  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        TEXT        NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.brands (
-  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID        NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  name            TEXT        NOT NULL,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- stores gains latitude/longitude/checkin_radius_meters in migration 20260308164958
-CREATE TABLE public.stores (
-  id                      UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  brand_id                UUID        NOT NULL REFERENCES public.brands(id) ON DELETE CASCADE,
-  organization_id         UUID        NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  name                    TEXT        NOT NULL,
-  address                 TEXT,
-  phone                   TEXT,
-  latitude                NUMERIC,
-  longitude               NUMERIC,
-  checkin_radius_meters   INTEGER     DEFAULT 200,
-  created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-
--- =============================================================================
--- 4. EMPLOYEE & ROLE TABLES
--- =============================================================================
-
--- employee_profiles gains profile_image_url/bio/status in migration 20260308160323
--- user_id made nullable and invite columns added in migration 20260309004752
-CREATE TABLE public.employee_profiles (
-  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id           UUID        REFERENCES auth.users(id) ON DELETE CASCADE,  -- nullable (invite flow)
-  organization_id   UUID        NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  brand_id          UUID        NOT NULL REFERENCES public.brands(id) ON DELETE CASCADE,
-  store_id          UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  full_name         TEXT        NOT NULL,
-  phone             TEXT,
-  position          TEXT,
-  employment_type   TEXT        DEFAULT 'full_time',
-  hire_date         DATE,
-  profile_image_url TEXT,
-  bio               TEXT,
-  status            TEXT        NOT NULL DEFAULT 'offline',
-  invite_status     TEXT        NOT NULL DEFAULT 'linked',
-  invited_by        UUID,
-  invited_at        TIMESTAMPTZ,
-  linked_at         TIMESTAMPTZ,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(user_id, store_id)
-);
-
-CREATE TABLE public.user_store_roles (
-  id         UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id    UUID            NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  store_id   UUID            NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  role       public.app_role NOT NULL DEFAULT 'hall_staff',
-  created_at TIMESTAMPTZ     NOT NULL DEFAULT now(),
-  UNIQUE(user_id, store_id)
-);
-
-
--- =============================================================================
--- 5. ATTENDANCE TABLES
--- =============================================================================
-
--- attendance_logs gains GPS columns in migration 20260308164958
-CREATE TABLE public.attendance_logs (
-  id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  employee_profile_id UUID        NOT NULL REFERENCES public.employee_profiles(id) ON DELETE CASCADE,
-  store_id            UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  user_id             UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  check_in_at         TIMESTAMPTZ,
-  check_out_at        TIMESTAMPTZ,
-  status              TEXT        NOT NULL DEFAULT 'checked_in',
-  is_late             BOOLEAN     DEFAULT false,
-  is_early_leave      BOOLEAN     DEFAULT false,
-  scheduled_start     TIMESTAMPTZ,
-  scheduled_end       TIMESTAMPTZ,
-  work_hours          NUMERIC(5,2),
-  notes               TEXT,
-  date                DATE        NOT NULL DEFAULT CURRENT_DATE,
-  checkin_latitude    NUMERIC,
-  checkin_longitude   NUMERIC,
-  is_outside_radius   BOOLEAN     DEFAULT false,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.break_logs (
-  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  attendance_log_id  UUID        NOT NULL REFERENCES public.attendance_logs(id) ON DELETE CASCADE,
-  start_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
-  end_at             TIMESTAMPTZ,
-  duration_minutes   NUMERIC(5,1),
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-
--- =============================================================================
--- 6. CHAT TABLES
--- =============================================================================
-
--- chat_rooms gains pinned_message_id/pinned_at/pinned_by in migration 20260308164250
-CREATE TABLE public.chat_rooms (
-  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id          UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  name              TEXT        NOT NULL,
-  type              TEXT        NOT NULL DEFAULT 'group',  -- 'group', 'announcement'
-  created_by        UUID        NOT NULL,
-  pinned_message_id UUID,  -- FK added after chat_messages; set as self-ref below
-  pinned_at         TIMESTAMPTZ,
-  pinned_by         UUID,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.chat_room_members (
-  id        UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  room_id   UUID        NOT NULL REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
-  user_id   UUID        NOT NULL,
-  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(room_id, user_id)
-);
-
--- chat_messages gains file_url/file_name/file_type in migration 20260308164250
-CREATE TABLE public.chat_messages (
-  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  room_id      UUID        NOT NULL REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
-  sender_id    UUID        NOT NULL,
-  content      TEXT        NOT NULL,
-  message_type TEXT        NOT NULL DEFAULT 'text',  -- 'text', 'system'
-  file_url     TEXT,
-  file_name    TEXT,
-  file_type    TEXT,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Add FK for pinned_message_id now that chat_messages exists
-ALTER TABLE public.chat_rooms
-  ADD CONSTRAINT chat_rooms_pinned_message_id_fkey
-  FOREIGN KEY (pinned_message_id) REFERENCES public.chat_messages(id);
-
-CREATE TABLE public.chat_read_receipts (
-  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  room_id      UUID        NOT NULL REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
-  user_id      UUID        NOT NULL,
-  last_read_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(room_id, user_id)
-);
-
--- chat_mentions added in migration 20260308164250
-CREATE TABLE public.chat_mentions (
-  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  message_id        UUID        NOT NULL REFERENCES public.chat_messages(id) ON DELETE CASCADE,
-  mentioned_user_id UUID        NOT NULL,
-  room_id           UUID        NOT NULL REFERENCES public.chat_rooms(id) ON DELETE CASCADE,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-
--- =============================================================================
--- 7. SALES TABLES
--- =============================================================================
-
-CREATE TABLE public.sales_targets (
-  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id      UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  year_month    TEXT        NOT NULL,  -- '2026-03'
-  target_amount NUMERIC     NOT NULL DEFAULT 0,
-  created_by    UUID        NOT NULL,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(store_id, year_month)
-);
-
-CREATE TABLE public.sales_records (
-  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id    UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  date        DATE        NOT NULL DEFAULT CURRENT_DATE,
-  amount      NUMERIC     NOT NULL DEFAULT 0,
-  notes       TEXT,
-  recorded_by UUID        NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(store_id, date)
-);
-
-
--- =============================================================================
--- 8. SHIFT & SCHEDULE TABLES
--- =============================================================================
-
--- shifts gains assignee_type/manual_* columns and nullable user_id in migration 20260308124338
-CREATE TABLE public.shifts (
-  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id           UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  user_id            UUID,  -- nullable for manual entries
-  shift_date         DATE        NOT NULL,
-  start_time         TIME        NOT NULL,
-  end_time           TIME        NOT NULL,
-  break_minutes      INTEGER     DEFAULT 0,
-  role               TEXT,
-  notes              TEXT,
-  assignee_type      TEXT        NOT NULL DEFAULT 'registered_user',
-  manual_name        TEXT,
-  manual_role_label  TEXT,
-  manual_phone       TEXT,
-  created_by         UUID        NOT NULL,
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.shift_templates (
-  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id      UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  name          TEXT        NOT NULL,
-  start_time    TIME        NOT NULL,
-  end_time      TIME        NOT NULL,
-  break_minutes INTEGER     NOT NULL DEFAULT 0,
-  role          TEXT,
-  created_by    UUID        NOT NULL,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- shift_swaps added in migration 20260308164958
-CREATE TABLE public.shift_swaps (
-  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id        UUID        NOT NULL REFERENCES public.stores(id),
-  shift_id        UUID        NOT NULL REFERENCES public.shifts(id) ON DELETE CASCADE,
-  requester_id    UUID        NOT NULL,
-  accepter_id     UUID,
-  status          TEXT        NOT NULL DEFAULT 'pending',
-  approved_by     UUID,
-  chat_message_id UUID,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-
--- =============================================================================
--- 9. CHECKLIST TABLES
--- =============================================================================
-
-CREATE TABLE public.checklist_templates (
-  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id        UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  checklist_type  TEXT        NOT NULL,
-  title           TEXT        NOT NULL,
-  description     TEXT,
-  assigned_role   TEXT,
-  requires_photo  BOOLEAN     DEFAULT false,
-  sort_order      INTEGER     DEFAULT 0,
-  is_active       BOOLEAN     DEFAULT true,
-  created_by      UUID        NOT NULL,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.checklist_runs (
-  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  template_id      UUID        NOT NULL REFERENCES public.checklist_templates(id) ON DELETE CASCADE,
-  store_id         UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  business_date    DATE        NOT NULL DEFAULT CURRENT_DATE,
-  assigned_user_id UUID,
-  completed_by     UUID,
-  completed_at     TIMESTAMPTZ,
-  status           TEXT        NOT NULL DEFAULT 'pending',
-  note             TEXT,
-  photo_url        TEXT,
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-
--- =============================================================================
--- 10. RESERVATION TABLE
--- =============================================================================
-
-CREATE TABLE public.reservations (
-  id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id            UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  reservation_source  TEXT        DEFAULT 'manual',
-  customer_name       TEXT        NOT NULL,
-  phone_number        TEXT,
-  reservation_date    DATE        NOT NULL,
-  reservation_time    TIME        NOT NULL,
-  guest_count         INTEGER     NOT NULL DEFAULT 2,
-  seating_area        TEXT,
-  status              TEXT        NOT NULL DEFAULT '예약 확정',
-  memo                TEXT,
-  special_request     TEXT,
-  vip_flag            BOOLEAN     DEFAULT false,
-  created_by          UUID        NOT NULL,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-
--- =============================================================================
--- 11. INVENTORY TABLES
--- =============================================================================
-
--- inventory_items gains current_stock/minimum_stock/expiry_date in migration 20260308164652
-CREATE TABLE public.inventory_items (
-  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id        UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  item_name       TEXT        NOT NULL,
-  english_name    TEXT,
-  short_code      TEXT,
-  aliases         TEXT[]      DEFAULT '{}',
-  category        TEXT        NOT NULL DEFAULT '기타',
-  item_type       TEXT        NOT NULL DEFAULT 'raw',
-  default_unit    TEXT        DEFAULT 'kg',
-  current_stock   NUMERIC     DEFAULT 0,
-  minimum_stock   NUMERIC     DEFAULT 0,
-  expiry_date     DATE,
-  is_active       BOOLEAN     NOT NULL DEFAULT true,
-  created_by      UUID        NOT NULL,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.item_usage_history (
-  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     UUID        NOT NULL,
-  store_id    UUID        NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  item_id     UUID        NOT NULL REFERENCES public.inventory_items(id) ON DELETE CASCADE,
-  query_text  TEXT,
-  selected_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.purchase_requests (
-  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id     UUID        NOT NULL REFERENCES public.stores(id),
-  item_name    TEXT        NOT NULL,
-  item_id      UUID        REFERENCES public.inventory_items(id),
-  quantity     NUMERIC     NOT NULL DEFAULT 1,
-  unit         TEXT        DEFAULT 'kg',
-  supplier     TEXT,
-  notes        TEXT,
-  requested_by UUID        NOT NULL,
-  approved_by  UUID,
-  status       TEXT        NOT NULL DEFAULT 'pending',
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.inventory_alerts (
-  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id     UUID        NOT NULL REFERENCES public.stores(id),
-  item_id      UUID        NOT NULL REFERENCES public.inventory_items(id) ON DELETE CASCADE,
-  alert_type   TEXT        NOT NULL DEFAULT 'low_stock',
-  message      TEXT        NOT NULL,
-  is_resolved  BOOLEAN     NOT NULL DEFAULT false,
-  resolved_by  UUID,
-  resolved_at  TIMESTAMPTZ,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-
--- =============================================================================
--- 12. LEAVE & NOTIFICATION TABLES
--- =============================================================================
-
-CREATE TABLE public.leave_requests (
-  id                UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  applicant_user_id UUID        NOT NULL,
-  store_id          UUID        NOT NULL REFERENCES public.stores(id),
-  approver_user_id  UUID,
-  leave_type        TEXT        NOT NULL DEFAULT '연차',
-  start_date        DATE        NOT NULL,
-  end_date          DATE        NOT NULL,
-  reason            TEXT,
-  status            TEXT        NOT NULL DEFAULT 'pending',
-  rejection_reason  TEXT,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.notifications (
-  id                  UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id             UUID        NOT NULL,
-  type                TEXT        NOT NULL,
-  title               TEXT        NOT NULL,
-  message             TEXT,
-  related_entity_type TEXT,
-  related_entity_id   UUID,
-  is_read             BOOLEAN     NOT NULL DEFAULT false,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_by          UUID
-);
-
--- notification_preferences gains additional enable_* columns in migration 20260308160323
-CREATE TABLE public.notification_preferences (
-  id                      UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id                 UUID        NOT NULL UNIQUE,
-  enable_all              BOOLEAN     NOT NULL DEFAULT true,
-  enable_leave_request    BOOLEAN     NOT NULL DEFAULT true,
-  enable_leave_result     BOOLEAN     NOT NULL DEFAULT true,
-  enable_schedule_new     BOOLEAN     NOT NULL DEFAULT true,
-  enable_schedule_change  BOOLEAN     NOT NULL DEFAULT true,
-  enable_checklist        BOOLEAN     NOT NULL DEFAULT true,
-  enable_inventory        BOOLEAN     NOT NULL DEFAULT true,
-  enable_document_sign    BOOLEAN     NOT NULL DEFAULT true,
-  enable_announcement     BOOLEAN     NOT NULL DEFAULT true,
-  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now()
-);
 
 
 -- =============================================================================
