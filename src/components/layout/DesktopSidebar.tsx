@@ -66,8 +66,8 @@ const DesktopSidebar = () => {
           <ChefHat className="w-5 h-5 text-sidebar-primary-foreground" />
         </div>
         <div>
-          <h1 className="font-bold text-sidebar-foreground text-lg leading-tight">TableOps</h1>
-          <p className="text-xs text-sidebar-foreground/60">운영 관리</p>
+          <h1 className="font-heading font-bold text-sidebar-foreground text-lg leading-tight tracking-tight">TableOps</h1>
+          <p className="text-[10px] text-sidebar-foreground/50 font-medium tracking-wide uppercase">Restaurant Ops</p>
         </div>
       </div>
 
