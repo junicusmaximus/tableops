@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Noto Sans KR"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['"Pretendard"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        heading: ['"Space Grotesk"', '"Pretendard"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -77,6 +78,10 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        'glow': '0 0 20px -5px hsl(36 95% 50% / 0.15)',
+        'card-hover': '0 8px 30px -12px hsl(220 20% 10% / 0.12)',
       },
       keyframes: {
         "accordion-down": {

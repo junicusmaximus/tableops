@@ -33,10 +33,10 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm animate-fade-in-up">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary shadow-glow mb-4">
             <ChefHat className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">TableOps</h1>
+          <h1 className="text-2xl font-heading font-bold text-foreground tracking-tight">TableOps</h1>
           <p className="text-muted-foreground mt-1 text-sm">레스토랑 운영 관리 시스템</p>
         </div>
 
