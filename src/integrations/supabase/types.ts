@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_reports: {
+        Row: {
+          created_at: string
+          generated_by: string
+          id: string
+          period_end: string
+          period_start: string
+          period_type: string
+          report_json: Json
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_by: string
+          id?: string
+          period_end: string
+          period_start: string
+          period_type?: string
+          report_json?: Json
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_by?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          report_json?: Json
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_logs: {
         Row: {
           check_in_at: string | null
