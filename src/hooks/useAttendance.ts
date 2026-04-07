@@ -20,7 +20,31 @@ export const useAttendanceLogs = (storeId: string | undefined, date?: string) =>
         .eq('date', targetDate)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return data ?? [];
+
+      // Fetch break logs for all attendance logs
+      const logIds = (data ?? []).map(d => d.id);
+      let breakLogs: any[] = [];
+      if (logIds.length > 0) {
+        const { data: breaks } = await supabase
+          .from('break_logs')
+          .select('*')
+          .in('attendance_log_id', logIds)
+          .order('start_at', { ascending: true });
+        breakLogs = breaks ?? [];
+      }
+
+      // Attach break logs to each attendance log
+      const breaksByAttendance = new Map<string, any[]>();
+      for (const b of breakLogs) {
+        const arr = breaksByAttendance.get(b.attendance_log_id) || [];
+        arr.push(b);
+        breaksByAttendance.set(b.attendance_log_id, arr);
+      }
+
+      return (data ?? []).map(log => ({
+        ...log,
+        break_logs: breaksByAttendance.get(log.id) || [],
+      }));
     },
     enabled: !!storeId,
   });
