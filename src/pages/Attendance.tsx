@@ -199,33 +199,53 @@ const Attendance = () => {
               const emp = employeeMap.get(log.employee_profile_id);
               const name = (log as any).employee_profiles?.full_name ?? emp?.full_name ?? '알 수 없음';
               const position = (log as any).employee_profiles?.position ?? emp?.position ?? '';
+              const breaks: any[] = (log as any).break_logs ?? [];
+              const totalBreakMin = breaks.reduce((sum: number, b: any) => sum + (b.duration_minutes ?? 0), 0);
               return (
-                <div key={log.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground">
-                      {name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{name}</p>
-                      <p className="text-xs text-muted-foreground">{position}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right text-xs">
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <LogIn className="w-3 h-3" />
-                        {formatTime(log.check_in_at)}
+                <div key={log.id} className="py-3 border-b border-border last:border-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground">
+                        {name.charAt(0)}
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <LogOut className="w-3 h-3" />
-                        {formatTime(log.check_out_at)}
+                      <div>
+                        <p className="text-sm font-medium">{name}</p>
+                        <p className="text-xs text-muted-foreground">{position}</p>
                       </div>
                     </div>
-                    <StatusBadge
-                      status={getStatusBadgeType(log.status)}
-                      label={getStatusLabel(log.status)}
-                    />
+                    <div className="flex items-center gap-3">
+                      <div className="text-right text-xs">
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <LogIn className="w-3 h-3" />
+                          {formatTime(log.check_in_at)}
+                        </div>
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <LogOut className="w-3 h-3" />
+                          {formatTime(log.check_out_at)}
+                        </div>
+                      </div>
+                      <StatusBadge
+                        status={getStatusBadgeType(log.status)}
+                        label={getStatusLabel(log.status)}
+                      />
+                    </div>
                   </div>
+                  {breaks.length > 0 && (
+                    <div className="mt-2 ml-[52px] space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <Coffee className="w-3 h-3" />
+                        <span>휴식 총 {Math.round(totalBreakMin)}분</span>
+                      </div>
+                      {breaks.map((b: any, i: number) => (
+                        <div key={b.id ?? i} className="text-xs text-muted-foreground/70 pl-4">
+                          {formatTime(b.start_at)} ~ {b.end_at ? formatTime(b.end_at) : '진행중'}
+                          {b.duration_minutes != null && (
+                            <span className="ml-1">({Math.round(b.duration_minutes)}분)</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })
