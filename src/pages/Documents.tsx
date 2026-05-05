@@ -102,10 +102,12 @@ const Documents = () => {
           <h1 className="text-2xl font-bold">서류 관리</h1>
           <p className="text-muted-foreground text-sm mt-1">근로계약서 및 직원 서류</p>
         </div>
-        <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-          <DialogTrigger asChild>
-            <Button><Upload className="w-4 h-4 mr-2" />서류 업로드</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          {isManager && <DocumentExpirySettings />}
+          <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+            <DialogTrigger asChild>
+              <Button><Upload className="w-4 h-4 mr-2" />서류 업로드</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>서류 업로드</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
