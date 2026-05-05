@@ -215,9 +215,12 @@ const Documents = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {doc.daysToExpiry !== null && doc.daysToExpiry <= 30 && (
-                  <StatusBadge status={doc.daysToExpiry <= 0 ? 'destructive' : 'warning'} label={doc.daysToExpiry <= 0 ? '만료' : `D-${doc.daysToExpiry}`} />
-                )}
+                {(() => {
+                  const alert = getActiveAlert(doc);
+                  if (alert === null) return null;
+                  if (alert === -1) return <StatusBadge status="destructive" label="만료" />;
+                  return <StatusBadge status="warning" label={`알림 D-${doc.daysToExpiry}`} />;
+                })()}
                 <StatusBadge
                   status={doc.status === '서명완료' || doc.status === '제출완료' ? 'success' : 'destructive'}
                   label={doc.status}
