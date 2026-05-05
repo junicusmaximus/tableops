@@ -36,6 +36,8 @@ const initialDocs: DocRecord[] = [
 
 const Documents = () => {
   const { toast } = useToast();
+  const isManager = useIsManager();
+  const expiryConfig = useExpiryConfig();
   const [docs, setDocs] = useState<DocRecord[]>(initialDocs);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<DocRecord | null>(null);
@@ -43,6 +45,16 @@ const Documents = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('전체');
   const [uploadForm, setUploadForm] = useState({ name: '', docType: '근로계약서', startDate: '', endDate: '' });
+
+  const getActiveAlert = (doc: DocRecord): number | null => {
+    if (doc.daysToExpiry === null) return null;
+    const rule = expiryConfig[doc.docType];
+    if (!rule?.enabled) return null;
+    if (doc.daysToExpiry < 0) return -1;
+    const sorted = [...rule.offsets].sort((a, b) => a - b);
+    const hit = sorted.find(d => doc.daysToExpiry! <= d);
+    return hit ?? null;
+  };
 
   const filteredDocs = docs.filter(d => {
     const matchesSearch = d.name.includes(searchQuery) || d.docType.includes(searchQuery);
