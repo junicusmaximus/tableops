@@ -8,8 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import StatusBadge from '@/components/common/StatusBadge';
 import EmptyState from '@/components/common/EmptyState';
-import { Plus, Upload, FileText, Download, Eye, Search, RefreshCw } from 'lucide-react';
+import { Plus, Upload, FileText, Download, Eye, Search, RefreshCw, BellRing } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useIsManager } from '@/hooks/useUserRole';
+import DocumentExpirySettings, { useExpiryConfig } from '@/components/documents/DocumentExpirySettings';
 
 interface DocRecord {
   id: number;
