@@ -8,8 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import StatusBadge from '@/components/common/StatusBadge';
 import EmptyState from '@/components/common/EmptyState';
-import { Plus, Upload, FileText, Download, Eye, Search, RefreshCw } from 'lucide-react';
+import { Plus, Upload, FileText, Download, Eye, Search, RefreshCw, BellRing } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useIsManager } from '@/hooks/useUserRole';
+import DocumentExpirySettings, { useExpiryConfig } from '@/components/documents/DocumentExpirySettings';
 
 interface DocRecord {
   id: number;
@@ -34,6 +36,8 @@ const initialDocs: DocRecord[] = [
 
 const Documents = () => {
   const { toast } = useToast();
+  const isManager = useIsManager();
+  const expiryConfig = useExpiryConfig();
   const [docs, setDocs] = useState<DocRecord[]>(initialDocs);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<DocRecord | null>(null);
@@ -41,6 +45,16 @@ const Documents = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('전체');
   const [uploadForm, setUploadForm] = useState({ name: '', docType: '근로계약서', startDate: '', endDate: '' });
+
+  const getActiveAlert = (doc: DocRecord): number | null => {
+    if (doc.daysToExpiry === null) return null;
+    const rule = expiryConfig[doc.docType];
+    if (!rule?.enabled) return null;
+    if (doc.daysToExpiry < 0) return -1;
+    const sorted = [...rule.offsets].sort((a, b) => a - b);
+    const hit = sorted.find(d => doc.daysToExpiry! <= d);
+    return hit ?? null;
+  };
 
   const filteredDocs = docs.filter(d => {
     const matchesSearch = d.name.includes(searchQuery) || d.docType.includes(searchQuery);
@@ -88,10 +102,12 @@ const Documents = () => {
           <h1 className="text-2xl font-bold">서류 관리</h1>
           <p className="text-muted-foreground text-sm mt-1">근로계약서 및 직원 서류</p>
         </div>
-        <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-          <DialogTrigger asChild>
-            <Button><Upload className="w-4 h-4 mr-2" />서류 업로드</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          {isManager && <DocumentExpirySettings />}
+          <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+            <DialogTrigger asChild>
+              <Button><Upload className="w-4 h-4 mr-2" />서류 업로드</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>서류 업로드</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
@@ -121,7 +137,8 @@ const Documents = () => {
               <Button onClick={handleUpload} className="w-full">업로드</Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Update Dialog */}
@@ -198,9 +215,12 @@ const Documents = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {doc.daysToExpiry !== null && doc.daysToExpiry <= 30 && (
-                  <StatusBadge status={doc.daysToExpiry <= 0 ? 'destructive' : 'warning'} label={doc.daysToExpiry <= 0 ? '만료' : `D-${doc.daysToExpiry}`} />
-                )}
+                {(() => {
+                  const alert = getActiveAlert(doc);
+                  if (alert === null) return null;
+                  if (alert === -1) return <StatusBadge status="destructive" label="만료" />;
+                  return <StatusBadge status="warning" label={`알림 D-${doc.daysToExpiry}`} />;
+                })()}
                 <StatusBadge
                   status={doc.status === '서명완료' || doc.status === '제출완료' ? 'success' : 'destructive'}
                   label={doc.status}
