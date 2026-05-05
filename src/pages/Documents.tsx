@@ -137,7 +137,8 @@ const Documents = () => {
               <Button onClick={handleUpload} className="w-full">업로드</Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Update Dialog */}
