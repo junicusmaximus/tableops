@@ -111,14 +111,17 @@ const Chat = () => {
     }
   };
 
-  const handlePinMessage = (messageId: string | null) => {
-    if (!selectedRoomId) return;
-    pinMessage.mutate(
-      { roomId: selectedRoomId, messageId },
+  const handleStartDM = (otherUserId: string, otherName: string) => {
+    createDM.mutate(
+      { otherUserId, otherName },
       {
-        onSuccess: () => toast.success(messageId ? '메시지가 고정되었습니다' : '고정이 해제되었습니다'),
-        onError: () => toast.error('작업에 실패했습니다'),
-      }
+        onSuccess: (room: any) => {
+          setSelectedRoomId(room.id);
+          setDmDialogOpen(false);
+          setMobileView('chat');
+        },
+        onError: () => toast.error('대화를 시작할 수 없습니다'),
+      },
     );
   };
 
@@ -154,8 +157,6 @@ const Chat = () => {
     searchQuery,
     onSearchQueryChange: setSearchQuery,
     members,
-    pinnedMessage,
-    onPinMessage: handlePinMessage,
     canPin: isManager,
     onFileUpload: handleFileUpload,
     isUploading: uploadFile.isPending,
