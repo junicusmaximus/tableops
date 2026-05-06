@@ -512,12 +512,17 @@ const ChatMessageArea = ({
             visible={showMentions}
           />
           <div className="flex items-end gap-2 bg-muted/40 rounded-xl border border-border px-3 py-2 focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
+            {canPin && (
+              <OperationalCardComposer
+                onSend={(cardType, metadata) =>
+                  onSend(undefined, {
+                    messageType: 'card',
+                    metadata: { cardType, ...metadata },
+                    content: `[${cardType}] ${(metadata.title as string) ?? ''}`,
+                  })
+                }
+              />
+            )}
             >
               <Paperclip className="w-4 h-4" />
             </Button>
