@@ -107,6 +107,23 @@ const ChatMessageArea = ({
   const [mentionQuery, setMentionQuery] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [pendingMentions, setPendingMentions] = useState<string[]>([]);
+  const [confirmRequest, setConfirmRequest] = useState(false);
+
+  const messageIds = messages.map((m) => m.id);
+  const { data: reactions = [] } = useChatReactions(room?.id ?? null, messageIds);
+  const { data: confirmations = [] } = useChatConfirmations(room?.id ?? null, messageIds);
+  const reactionsByMessage = reactions.reduce<Record<string, typeof reactions>>((acc, r) => {
+    (acc[r.message_id] ||= []).push(r);
+    return acc;
+  }, {});
+  const confirmsByMessage = confirmations.reduce<Record<string, typeof confirmations>>((acc, c) => {
+    (acc[c.message_id] ||= []).push(c);
+    return acc;
+  }, {});
+  const memberNameMap = members.reduce<Record<string, string>>((acc, m) => {
+    acc[m.user_id] = m.full_name;
+    return acc;
+  }, {});
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
