@@ -410,6 +410,23 @@ const ChatMessageArea = ({
                             <FilePreview fileUrl={msg.file_url} fileName={msg.file_name} fileType={msg.file_type} />
                           )}
 
+                          {/* Confirmation request card */}
+                          {msg.message_type === 'confirmation' && (
+                            <ConfirmationCard
+                              messageId={msg.id}
+                              confirmations={confirmsByMessage[msg.id] ?? []}
+                              currentUserId={currentUserId}
+                              confirmerNames={memberNameMap}
+                            />
+                          )}
+
+                          {/* Reactions */}
+                          <MessageReactions
+                            messageId={msg.id}
+                            reactions={reactionsByMessage[msg.id] ?? []}
+                            currentUserId={currentUserId}
+                          />
+
                           {/* Read receipt */}
                           {isMine && (
                             <ReadReceiptPopover
