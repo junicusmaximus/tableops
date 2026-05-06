@@ -31,6 +31,7 @@ import DocumentBuilder from "@/pages/DocumentBuilder";
 import DocumentSend from "@/pages/DocumentSend";
 import DocumentSign from "@/pages/DocumentSign";
 import DocumentDetail from "@/pages/DocumentDetail";
+import SystemContractSend from "@/pages/SystemContractSend";
 import Benefits from "@/pages/Benefits";
 import Glossary from "@/pages/Glossary";
 import Announcements from "@/pages/Announcements";
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="documents/send/:templateId" element={<DocumentSend />} />
               <Route path="documents/sign/:id" element={<DocumentSign />} />
               <Route path="documents/view/:id" element={<DocumentDetail />} />
+              <Route path="documents/system-contract/:contractType" element={<SystemContractSend />} />
               <Route path="benefits" element={<Benefits />} />
               <Route path="glossary" element={<Glossary />} />
               <Route path="announcements" element={<Announcements />} />

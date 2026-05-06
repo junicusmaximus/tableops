@@ -4,8 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, FileText, Send, Inbox, Archive, Search, Trash2, Copy } from 'lucide-react';
+import { Plus, FileText, Send, Inbox, Archive, Search, Trash2, Copy, FilePlus2 } from 'lucide-react';
 import EmptyState from '@/components/common/EmptyState';
+import SystemTemplateDialog from '@/components/documents/SystemTemplateDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useIsManager } from '@/hooks/useUserRole';
 import {
@@ -24,6 +25,7 @@ const Documents = () => {
   const { toast } = useToast();
   const isManager = useIsManager();
   const [search, setSearch] = useState('');
+  const [systemDialogOpen, setSystemDialogOpen] = useState(false);
 
   const { data: templates = [], isLoading: tplLoading } = useDocumentTemplates();
   const { data: received = [] } = useReceivedDocuments();
@@ -73,6 +75,9 @@ const Documents = () => {
                 기본 템플릿 추가
               </Button>
             )}
+            <Button variant="outline" onClick={() => setSystemDialogOpen(true)}>
+              <FilePlus2 className="w-4 h-4 mr-1" />새 전자문서 만들기
+            </Button>
             <Button onClick={() => navigate('/documents/templates/new')}>
               <Plus className="w-4 h-4 mr-1" />새 템플릿
             </Button>
@@ -180,6 +185,8 @@ const Documents = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      <SystemTemplateDialog open={systemDialogOpen} onOpenChange={setSystemDialogOpen} />
     </div>
   );
 };
