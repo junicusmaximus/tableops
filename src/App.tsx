@@ -52,8 +52,13 @@ import WorkStats from "@/pages/WorkStats";
 import AIScheduleRecommend from "@/pages/AIScheduleRecommend";
 import AIStoreReport from "@/pages/AIStoreReport";
 import NotFound from "@/pages/NotFound";
+import RoleGuard from "@/components/auth/RoleGuard";
 
-const queryClient = new QueryClient();
+/** Wrap a route element so manager-only/toggle-gated routes are blocked
+ *  cleanly when accessed by direct URL. */
+const G = ({ children }: { children: React.ReactNode }) => (
+  <RoleGuard>{children}</RoleGuard>
+);
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
