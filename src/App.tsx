@@ -144,5 +144,14 @@ const App = () => (
               <Route path="work-stats" element={<WorkStats />} />
               <Route path="ai-schedule" element={<G><AIScheduleRecommend /></G>} />
               <Route path="ai-report" element={<G><AIStoreReport /></G>} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
+
