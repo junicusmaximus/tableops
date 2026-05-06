@@ -700,6 +700,39 @@ export type Database = {
           },
         ]
       }
+      company_settings: {
+        Row: {
+          allow_manager_branch_comparison: boolean
+          allow_manager_sales_access: boolean
+          allow_manager_sales_detail_access: boolean
+          created_at: string
+          id: string
+          organization_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allow_manager_branch_comparison?: boolean
+          allow_manager_sales_access?: boolean
+          allow_manager_sales_detail_access?: boolean
+          created_at?: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allow_manager_branch_comparison?: boolean
+          allow_manager_sales_access?: boolean
+          allow_manager_sales_detail_access?: boolean
+          created_at?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       consent_terms: {
         Row: {
           consent_type: string
@@ -1712,36 +1745,183 @@ export type Database = {
           },
         ]
       }
-      sales_records: {
+      sales_audit_logs: {
         Row: {
-          amount: number
+          action_type: string
           created_at: string
-          date: string
           id: string
-          notes: string | null
-          recorded_by: string
-          store_id: string
-          updated_at: string
+          metadata: Json | null
+          organization_id: string | null
+          store_id: string | null
+          target_period: string | null
+          user_id: string
+          user_role: string | null
         }
         Insert: {
-          amount?: number
+          action_type: string
           created_at?: string
-          date?: string
           id?: string
-          notes?: string | null
-          recorded_by: string
-          store_id: string
-          updated_at?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          store_id?: string | null
+          target_period?: string | null
+          user_id: string
+          user_role?: string | null
         }
         Update: {
-          amount?: number
+          action_type?: string
           created_at?: string
-          date?: string
           id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          store_id?: string | null
+          target_period?: string | null
+          user_id?: string
+          user_role?: string | null
+        }
+        Relationships: []
+      }
+      sales_import_batches: {
+        Row: {
+          created_at: string
+          duplicate_count: number
+          file_name: string | null
+          id: string
+          imported_count: number
+          notes: string | null
+          row_count: number
+          status: string
+          store_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          duplicate_count?: number
+          file_name?: string | null
+          id?: string
+          imported_count?: number
           notes?: string | null
-          recorded_by?: string
+          row_count?: number
+          status?: string
+          store_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          duplicate_count?: number
+          file_name?: string | null
+          id?: string
+          imported_count?: number
+          notes?: string | null
+          row_count?: number
+          status?: string
           store_id?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      sales_records: {
+        Row: {
+          alcohol_sales: number | null
+          amount: number
+          approval_time: string | null
+          business_date: string | null
+          card_sales: number | null
+          cash_sales: number | null
+          created_at: string
+          created_by: string | null
+          date: string
+          delivery_sales: number | null
+          discount_amount: number | null
+          gross_sales: number | null
+          id: string
+          import_batch_id: string | null
+          memo: string | null
+          net_sales: number | null
+          notes: string | null
+          order_id: string | null
+          organization_id: string | null
+          payment_method: string | null
+          raw_source_name: string | null
+          recorded_by: string
+          refund_amount: number | null
+          sales_channel: string | null
+          sales_datetime: string | null
+          sales_hour: number | null
+          source_type: string | null
+          store_id: string
+          transaction_id: string | null
+          updated_at: string
+          vat_amount: number | null
+          weekday: number | null
+        }
+        Insert: {
+          alcohol_sales?: number | null
+          amount?: number
+          approval_time?: string | null
+          business_date?: string | null
+          card_sales?: number | null
+          cash_sales?: number | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          delivery_sales?: number | null
+          discount_amount?: number | null
+          gross_sales?: number | null
+          id?: string
+          import_batch_id?: string | null
+          memo?: string | null
+          net_sales?: number | null
+          notes?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          payment_method?: string | null
+          raw_source_name?: string | null
+          recorded_by: string
+          refund_amount?: number | null
+          sales_channel?: string | null
+          sales_datetime?: string | null
+          sales_hour?: number | null
+          source_type?: string | null
+          store_id: string
+          transaction_id?: string | null
           updated_at?: string
+          vat_amount?: number | null
+          weekday?: number | null
+        }
+        Update: {
+          alcohol_sales?: number | null
+          amount?: number
+          approval_time?: string | null
+          business_date?: string | null
+          card_sales?: number | null
+          cash_sales?: number | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          delivery_sales?: number | null
+          discount_amount?: number | null
+          gross_sales?: number | null
+          id?: string
+          import_batch_id?: string | null
+          memo?: string | null
+          net_sales?: number | null
+          notes?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          payment_method?: string | null
+          raw_source_name?: string | null
+          recorded_by?: string
+          refund_amount?: number | null
+          sales_channel?: string | null
+          sales_datetime?: string | null
+          sales_hour?: number | null
+          source_type?: string | null
+          store_id?: string
+          transaction_id?: string | null
+          updated_at?: string
+          vat_amount?: number | null
+          weekday?: number | null
         }
         Relationships: [
           {
@@ -2093,6 +2273,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_sales_settings: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_sales: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_employee_profile_id: {
         Args: { _store_id: string; _user_id: string }
         Returns: string
@@ -2112,6 +2300,10 @@ export type Database = {
           _min_role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
       is_store_member: {
