@@ -4,7 +4,7 @@ import {
   TrendingUp, MessageSquare, Settings, ChefHat, LogOut,
   Clock, CalendarDays, BookOpen, Coffee, Briefcase,
   AlertTriangle, ShoppingCart, Upload, Gift, Notebook, CalendarCog,
-  Brain, Sparkles
+  Brain, Sparkles, GraduationCap
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsManager, useCurrentRole } from '@/hooks/useUserRole';
@@ -39,6 +39,7 @@ const navItems: NavItem[] = [
   { to: '/documents', icon: Upload, label: '서류 관리', group: '관리' },
   { to: '/benefits', icon: Gift, label: '복리후생', group: '관리' },
   { to: '/glossary', icon: BookOpen, label: '용어/매뉴얼', group: '관리' },
+  { to: '/knowledge', icon: GraduationCap, label: '교육/매뉴얼', group: '관리' },
   { to: '/chat', icon: MessageSquare, label: '채팅', group: '소통' },
   { to: '/ai-report', icon: Brain, label: 'AI 매장 리포트', group: '운영', managerOnly: true },
 ];

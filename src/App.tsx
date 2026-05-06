@@ -37,6 +37,11 @@ import DocumentDetail from "@/pages/DocumentDetail";
 import SystemContractSend from "@/pages/SystemContractSend";
 import Benefits from "@/pages/Benefits";
 import Glossary from "@/pages/Glossary";
+import Knowledge from "@/pages/Knowledge";
+import KnowledgeArticleDetail from "@/pages/KnowledgeArticleDetail";
+import RecipeDetail from "@/pages/RecipeDetail";
+import CourseDetail from "@/pages/CourseDetail";
+import QuizTake from "@/pages/QuizTake";
 import Announcements from "@/pages/Announcements";
 import Settings from "@/pages/Settings";
 import AccessIntegration from "@/pages/AccessIntegration";
@@ -115,6 +120,14 @@ const App = () => (
               <Route path="documents/system-contract/:contractType" element={<SystemContractSend />} />
               <Route path="benefits" element={<Benefits />} />
               <Route path="glossary" element={<Glossary />} />
+              <Route path="knowledge" element={<Knowledge />} />
+              <Route path="knowledge/articles/new" element={<KnowledgeArticleDetail />} />
+              <Route path="knowledge/articles/:id" element={<KnowledgeArticleDetail />} />
+              <Route path="knowledge/recipes/new" element={<RecipeDetail />} />
+              <Route path="knowledge/recipes/:id" element={<RecipeDetail />} />
+              <Route path="knowledge/courses/new" element={<CourseDetail />} />
+              <Route path="knowledge/courses/:id" element={<CourseDetail />} />
+              <Route path="knowledge/quizzes/:courseId/take" element={<QuizTake />} />
               <Route path="announcements" element={<Announcements />} />
               <Route path="settings" element={<Settings />} />
               <Route path="settings/access-integration" element={<AccessIntegration />} />
