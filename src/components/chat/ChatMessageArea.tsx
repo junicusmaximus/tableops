@@ -112,6 +112,13 @@ const ChatMessageArea = ({
   const [confirmRequest, setConfirmRequest] = useState(false);
 
   const messageIds = messages.map((m) => m.id);
+  const { data: pins = [] } = useChatPinnedMessages(room?.id ?? null);
+  const togglePin = useTogglePin();
+  const pinnedIds = new Set(pins.map((p) => p.message_id));
+  const handleTogglePin = (msgId: string, action: 'pin' | 'unpin') => {
+    if (!room) return;
+    togglePin.mutate({ roomId: room.id, messageId: msgId, action });
+  };
   const { data: reactions = [] } = useChatReactions(room?.id ?? null, messageIds);
   const { data: confirmations = [] } = useChatConfirmations(room?.id ?? null, messageIds);
   const reactionsByMessage = reactions.reduce<Record<string, typeof reactions>>((acc, r) => {
