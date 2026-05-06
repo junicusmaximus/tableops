@@ -7,56 +7,58 @@ import {
   Brain, Sparkles, GraduationCap
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsManager, useCurrentRole } from '@/hooks/useUserRole';
+import { useCurrentRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import RoleBadge from '@/components/common/RoleBadge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-interface NavItem {
-  to: string;
-  icon: React.ElementType;
-  label: string;
-  group: string;
-  managerOnly?: boolean;
-}
-
-const navItems: NavItem[] = [
-  { to: '/', icon: LayoutDashboard, label: '대시보드', group: '메인' },
-  { to: '/today-briefing', icon: Coffee, label: '오늘의 브리핑', group: '메인' },
-  { to: '/attendance', icon: Clock, label: '출퇴근 관리', group: '인사' },
-  { to: '/work-stats', icon: TrendingUp, label: '근무 통계', group: '인사' },
-  { to: '/schedule', icon: Calendar, label: '내 스케줄', group: '인사' },
-  { to: '/schedule-management', icon: CalendarCog, label: '스케줄 관리', group: '인사', managerOnly: true },
-  { to: '/ai-schedule', icon: Sparkles, label: 'AI 스케줄 추천', group: '인사', managerOnly: true },
-  { to: '/leave', icon: Briefcase, label: '휴가 관리', group: '인사' },
-  { to: '/staff', icon: Users, label: '직원 관리', group: '운영', managerOnly: true },
-  { to: '/checklists', icon: ClipboardCheck, label: '체크리스트', group: '운영' },
-  { to: '/reports', icon: FileText, label: '일지/보고서', group: '운영' },
-  { to: '/sales', icon: TrendingUp, label: '매출 관리', group: '운영', managerOnly: true },
-  { to: '/service-notes', icon: Notebook, label: '고객 서비스 노트', group: '운영' },
-  { to: '/ingredients', icon: AlertTriangle, label: '식재료 관리', group: '관리', managerOnly: true },
-  { to: '/purchase-orders', icon: ShoppingCart, label: '발주/입고', group: '관리', managerOnly: true },
-  { to: '/documents', icon: Upload, label: '서류 관리', group: '관리' },
-  { to: '/benefits', icon: Gift, label: '복리후생', group: '관리' },
-  { to: '/glossary', icon: BookOpen, label: '용어/매뉴얼', group: '관리' },
-  { to: '/knowledge', icon: GraduationCap, label: '교육/매뉴얼', group: '관리' },
-  { to: '/chat', icon: MessageSquare, label: '채팅', group: '소통' },
-  { to: '/ai-report', icon: Brain, label: 'AI 매장 리포트', group: '운영', managerOnly: true },
-];
+// Icon registry keyed by menu key from src/lib/permissions.ts.
+// Visibility/labels/paths/groups all come from MENU_ITEMS — this only
+// supplies icons + a few entries (work_stats) that aren't in the main
+// menu list but live in the sidebar.
+const MENU_ICONS: Record<string, React.ElementType> = {
+  dashboard: LayoutDashboard,
+  today_briefing: Coffee,
+  attendance: Clock,
+  work_stats: TrendingUp,
+  my_schedule: Calendar,
+  schedule_management: CalendarCog,
+  ai_schedule: Sparkles,
+  leave: Briefcase,
+  staff: Users,
+  checklists: ClipboardCheck,
+  reports: FileText,
+  sales: TrendingUp,
+  service_notes: Notebook,
+  ingredients: AlertTriangle,
+  purchase_orders: ShoppingCart,
+  documents: Upload,
+  benefits: Gift,
+  glossary: BookOpen,
+  knowledge: GraduationCap,
+  chat: MessageSquare,
+  ai_report: Brain,
+};
 
 const DesktopSidebar = () => {
   const { signOut, user } = useAuth();
   const location = useLocation();
-  const isManager = useIsManager();
   const currentRole = useCurrentRole();
+  const { visibleMenu } = usePermissions();
 
-  const visibleItems = navItems.filter((item) => !item.managerOnly || isManager);
+  const visibleItems = visibleMenu().map((m) => ({
+    to: m.path,
+    icon: MENU_ICONS[m.key] ?? LayoutDashboard,
+    label: m.label,
+    group: m.group,
+  }));
 
   const groups = visibleItems.reduce((acc, item) => {
     if (!acc[item.group]) acc[item.group] = [];
     acc[item.group].push(item);
     return acc;
-  }, {} as Record<string, NavItem[]>);
+  }, {} as Record<string, typeof visibleItems>);
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '사용자';
 

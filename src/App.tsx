@@ -52,8 +52,15 @@ import WorkStats from "@/pages/WorkStats";
 import AIScheduleRecommend from "@/pages/AIScheduleRecommend";
 import AIStoreReport from "@/pages/AIStoreReport";
 import NotFound from "@/pages/NotFound";
+import RoleGuard from "@/components/auth/RoleGuard";
 
 const queryClient = new QueryClient();
+
+/** Wrap a route element so manager-only/toggle-gated routes are blocked
+ *  cleanly when accessed by direct URL. */
+const G = ({ children }: { children: React.ReactNode }) => (
+  <RoleGuard>{children}</RoleGuard>
+);
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -94,49 +101,49 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="today-briefing" element={<TodayBriefing />} />
-              <Route path="staff" element={<StaffManagement />} />
-              <Route path="staff/:id" element={<StaffDetail />} />
+              <Route path="staff" element={<G><StaffManagement /></G>} />
+              <Route path="staff/:id" element={<G><StaffDetail /></G>} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="schedule" element={<MySchedule />} />
-              <Route path="schedule-management" element={<ScheduleManagement />} />
+              <Route path="schedule-management" element={<G><ScheduleManagement /></G>} />
               <Route path="leave" element={<Leave />} />
               <Route path="checklists" element={<Checklists />} />
               <Route path="chat" element={<Chat />} />
-              <Route path="sales" element={<Sales />} />
-              <Route path="sales/entry" element={<SalesEntry />} />
-              <Route path="sales/import" element={<SalesImport />} />
-              <Route path="settings/sales-access" element={<SalesAccessSettings />} />
+              <Route path="sales" element={<G><Sales /></G>} />
+              <Route path="sales/entry" element={<G><SalesEntry /></G>} />
+              <Route path="sales/import" element={<G><SalesImport /></G>} />
+              <Route path="settings/sales-access" element={<G><SalesAccessSettings /></G>} />
               <Route path="reservations" element={<Reservations />} />
               <Route path="reports" element={<Reports />} />
               <Route path="service-notes" element={<ServiceNotes />} />
-              <Route path="ingredients" element={<Ingredients />} />
-              <Route path="purchase-orders" element={<PurchaseOrders />} />
+              <Route path="ingredients" element={<G><Ingredients /></G>} />
+              <Route path="purchase-orders" element={<G><PurchaseOrders /></G>} />
               <Route path="documents" element={<Documents />} />
-              <Route path="documents/templates/new" element={<DocumentBuilder />} />
-              <Route path="documents/templates/:id" element={<DocumentBuilder />} />
-              <Route path="documents/send/:templateId" element={<DocumentSend />} />
+              <Route path="documents/templates/new" element={<G><DocumentBuilder /></G>} />
+              <Route path="documents/templates/:id" element={<G><DocumentBuilder /></G>} />
+              <Route path="documents/send/:templateId" element={<G><DocumentSend /></G>} />
               <Route path="documents/sign/:id" element={<DocumentSign />} />
               <Route path="documents/view/:id" element={<DocumentDetail />} />
-              <Route path="documents/system-contract/:contractType" element={<SystemContractSend />} />
+              <Route path="documents/system-contract/:contractType" element={<G><SystemContractSend /></G>} />
               <Route path="benefits" element={<Benefits />} />
               <Route path="glossary" element={<Glossary />} />
               <Route path="knowledge" element={<Knowledge />} />
-              <Route path="knowledge/articles/new" element={<KnowledgeArticleDetail />} />
+              <Route path="knowledge/articles/new" element={<G><KnowledgeArticleDetail /></G>} />
               <Route path="knowledge/articles/:id" element={<KnowledgeArticleDetail />} />
-              <Route path="knowledge/recipes/new" element={<RecipeDetail />} />
+              <Route path="knowledge/recipes/new" element={<G><RecipeDetail /></G>} />
               <Route path="knowledge/recipes/:id" element={<RecipeDetail />} />
-              <Route path="knowledge/courses/new" element={<CourseDetail />} />
+              <Route path="knowledge/courses/new" element={<G><CourseDetail /></G>} />
               <Route path="knowledge/courses/:id" element={<CourseDetail />} />
               <Route path="knowledge/quizzes/:courseId/take" element={<QuizTake />} />
               <Route path="announcements" element={<Announcements />} />
               <Route path="settings" element={<Settings />} />
-              <Route path="settings/access-integration" element={<AccessIntegration />} />
+              <Route path="settings/access-integration" element={<G><AccessIntegration /></G>} />
               <Route path="settings/consents" element={<ConsentSettings />} />
               <Route path="more" element={<MoreMenu />} />
               <Route path="stores" element={<Stores />} />
               <Route path="work-stats" element={<WorkStats />} />
-              <Route path="ai-schedule" element={<AIScheduleRecommend />} />
-              <Route path="ai-report" element={<AIStoreReport />} />
+              <Route path="ai-schedule" element={<G><AIScheduleRecommend /></G>} />
+              <Route path="ai-report" element={<G><AIStoreReport /></G>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -147,3 +154,4 @@ const App = () => (
 );
 
 export default App;
+
