@@ -75,7 +75,7 @@ export default function DocumentRenderer({ schema, smartCtx, values, onChange, o
         if (b.type === 'divider') {
           return <hr key={b.id} className="border-border" />;
         }
-        // field
+        if (b.type !== 'field') return null;
         return (
           <div key={b.id} className="space-y-1.5">
             {b.fieldType !== 'checkbox' && (
