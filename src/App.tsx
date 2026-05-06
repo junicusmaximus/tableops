@@ -36,6 +36,7 @@ import Benefits from "@/pages/Benefits";
 import Glossary from "@/pages/Glossary";
 import Announcements from "@/pages/Announcements";
 import Settings from "@/pages/Settings";
+import AccessIntegration from "@/pages/AccessIntegration";
 import MoreMenu from "@/pages/MoreMenu";
 import Stores from "@/pages/Stores";
 import WorkStats from "@/pages/WorkStats";
@@ -109,6 +110,7 @@ const App = () => (
               <Route path="glossary" element={<Glossary />} />
               <Route path="announcements" element={<Announcements />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="settings/access-integration" element={<AccessIntegration />} />
               <Route path="more" element={<MoreMenu />} />
               <Route path="stores" element={<Stores />} />
               <Route path="work-stats" element={<WorkStats />} />
