@@ -11,7 +11,11 @@ export interface ChatReaction {
   created_at: string;
 }
 
-export const REACTION_OPTIONS = ['✅', '👍', '👏', '🔥', '❗', '❓'] as const;
+export const REACTION_OPTIONS = [
+  '✅', '👍', '👏', '🔥', '❗', '❓',
+  '❤️', '🎉', '😂', '😮', '🙏', '👀',
+  '💯', '🚀', '☕', '🍚', '🥲', '😴',
+] as const;
 
 export const useChatReactions = (roomId: string | null, messageIds: string[]) => {
   const queryClient = useQueryClient();

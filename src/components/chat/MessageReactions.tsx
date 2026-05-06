@@ -61,7 +61,7 @@ const MessageReactions = ({ messageId, reactions, currentUserId, compact }: Prop
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-1.5" align="start">
-          <div className="flex gap-1">
+          <div className="grid grid-cols-6 gap-1 max-w-[240px]">
             {REACTION_OPTIONS.map((emoji) => (
               <button
                 key={emoji}
