@@ -4,8 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, FileText, Send, Inbox, Archive, Search, Trash2, Copy } from 'lucide-react';
+import { Plus, FileText, Send, Inbox, Archive, Search, Trash2, Copy, FilePlus2 } from 'lucide-react';
 import EmptyState from '@/components/common/EmptyState';
+import SystemTemplateDialog from '@/components/documents/SystemTemplateDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useIsManager } from '@/hooks/useUserRole';
 import {
