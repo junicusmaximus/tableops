@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone, User, DoorOpen, ChevronRight } from 'lucide-react';
+import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, ShieldCheck, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone, User, DoorOpen, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
