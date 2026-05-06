@@ -18,6 +18,7 @@ import { useChatPinnedMessages, useTogglePin } from '@/hooks/useChatPinnedMessag
 import type { ChatRoom, ChatMessage } from '@/hooks/useChat';
 import type { MentionMember } from '@/components/chat/MentionDropdown';
 import { useChatReactions } from '@/hooks/useChatReactions';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useChatConfirmations } from '@/hooks/useChatConfirmations';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -83,6 +84,7 @@ interface ChatMessageAreaProps {
   canPin?: boolean;
   onFileUpload?: (file: File) => void;
   isUploading?: boolean;
+  myName?: string;
 }
 
 const ChatMessageArea = ({
@@ -102,6 +104,7 @@ const ChatMessageArea = ({
   canPin,
   onFileUpload,
   isUploading,
+  myName,
 }: ChatMessageAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +124,9 @@ const ChatMessageArea = ({
   };
   const { data: reactions = [] } = useChatReactions(room?.id ?? null, messageIds);
   const { data: confirmations = [] } = useChatConfirmations(room?.id ?? null, messageIds);
+  const { typingUsers, broadcastTyping } = useTypingIndicator(room?.id ?? null, myName);
+  const isAnnouncementRoom = !!(room as any)?.is_announcement;
+  const canPostInRoom = !isAnnouncementRoom || !!canPin;
   const reactionsByMessage = reactions.reduce<Record<string, typeof reactions>>((acc, r) => {
     (acc[r.message_id] ||= []).push(r);
     return acc;
@@ -140,6 +146,7 @@ const ChatMessageArea = ({
 
   const handleInputChange = (val: string) => {
     onMessageChange(val);
+    if (val.trim()) broadcastTyping();
 
     // Detect @mention typing
     const lastAt = val.lastIndexOf('@');
@@ -487,76 +494,99 @@ const ChatMessageArea = ({
         </div>
       </ScrollArea>
 
+      {/* Typing indicator */}
+      {typingUsers.length > 0 && (
+        <div className="px-4 py-1 text-[11px] text-muted-foreground bg-background border-t border-border">
+          <span className="inline-flex items-center gap-1">
+            <span className="flex gap-0.5">
+              <span className="w-1 h-1 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-1 h-1 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '120ms' }} />
+              <span className="w-1 h-1 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '240ms' }} />
+            </span>
+            {typingUsers.map((u) => u.full_name).join(', ')}님이 입력 중...
+          </span>
+        </div>
+      )}
+
       {/* Input area */}
-      <div className="px-4 py-3 border-t border-border space-y-2">
-        {canPin && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setConfirmRequest((v) => !v)}
-              className={`text-[11px] px-2 py-1 rounded-full border transition-colors ${
-                confirmRequest
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              ✅ 확인 요청 {confirmRequest ? 'ON' : 'OFF'}
-            </button>
-          </div>
-        )}
-        <div className="relative">
-          <MentionDropdown
-            members={members}
-            query={mentionQuery}
-            onSelect={handleMentionSelect}
-            visible={showMentions}
-          />
-          <div className="flex items-end gap-2 bg-muted/40 rounded-xl border border-border px-3 py-2 focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
-            {canPin && (
-              <OperationalCardComposer
-                onSend={(cardType, metadata) =>
-                  onSend(undefined, {
-                    messageType: 'card',
-                    metadata: { cardType, ...metadata },
-                    content: `[${cardType}] ${(metadata.title as string) ?? ''}`,
-                  })
-                }
+      {canPostInRoom ? (
+        <div className="px-4 py-3 border-t border-border space-y-2">
+          {canPin && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmRequest((v) => !v)}
+                className={`text-[11px] px-2 py-1 rounded-full border transition-colors ${
+                  confirmRequest
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                ✅ 확인 요청 {confirmRequest ? 'ON' : 'OFF'}
+              </button>
+              {isAnnouncementRoom && (
+                <span className="text-[11px] text-muted-foreground">📢 공지 채널 (매니저 전용 게시)</span>
+              )}
+            </div>
+          )}
+          <div className="relative">
+            <MentionDropdown
+              members={members}
+              query={mentionQuery}
+              onSelect={handleMentionSelect}
+              visible={showMentions}
+            />
+            <div className="flex items-end gap-2 bg-muted/40 rounded-xl border border-border px-3 py-2 focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
+              {canPin && (
+                <OperationalCardComposer
+                  onSend={(cardType, metadata) =>
+                    onSend(undefined, {
+                      messageType: 'card',
+                      metadata: { cardType, ...metadata },
+                      content: `[${cardType}] ${(metadata.title as string) ?? ''}`,
+                    })
+                  }
+                />
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                <Paperclip className="w-4 h-4" />
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                onChange={handleFileSelect}
               />
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              <Paperclip className="w-4 h-4" />
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-              onChange={handleFileSelect}
-            />
-            <Input
-              placeholder={`#${room.name}에 메시지 보내기 (@로 멘션)`}
-              value={message}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 border-0 bg-transparent focus-visible:ring-0 px-0 text-sm min-h-[32px]"
-            />
-            <Button
-              size="icon"
-              className="h-8 w-8 shrink-0 rounded-lg"
-              onClick={handleSend}
-              disabled={!message.trim() || isSending || isUploading}
-            >
-              <Send className="w-4 h-4" />
-            </Button>
+              <Input
+                placeholder={`#${room.name}에 메시지 보내기 (@로 멘션)`}
+                value={message}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 px-0 text-sm min-h-[32px]"
+              />
+              <Button
+                size="icon"
+                className="h-8 w-8 shrink-0 rounded-lg"
+                onClick={handleSend}
+                disabled={!message.trim() || isSending || isUploading}
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="px-4 py-4 border-t border-border bg-muted/30 text-center text-xs text-muted-foreground">
+          📢 공지 채널은 매니저만 게시할 수 있습니다. 읽기는 가능합니다.
+        </div>
+      )}
     </div>
   );
 };
