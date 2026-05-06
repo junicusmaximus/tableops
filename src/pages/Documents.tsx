@@ -185,6 +185,8 @@ const Documents = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      <SystemTemplateDialog open={systemDialogOpen} onOpenChange={setSystemDialogOpen} />
     </div>
   );
 };
