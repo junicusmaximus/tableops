@@ -39,19 +39,15 @@ export const useSalesRecords = (filters: SalesFilters | null, enabled = true) =>
           .from('sales_records')
           .select('id, store_id, business_date, date, sales_datetime, sales_hour, weekday, payment_method, sales_channel, net_sales, amount, card_sales, cash_sales, delivery_sales, alcohol_sales, source_type')
           .in('store_id', filters.storeIds)
-          .or(`business_date.gte.${range.from},date.gte.${range.from}`)
-          .or(`business_date.lte.${range.to},date.lte.${range.to}`)
+          .gte('business_date', range.from)
+          .lte('business_date', range.to)
           .order('business_date', { ascending: false })
           .limit(5000);
         if (filters.paymentMethod) q = q.eq('payment_method', filters.paymentMethod);
         if (filters.salesChannel) q = q.eq('sales_channel', filters.salesChannel);
         const { data, error } = await q;
         if (error) throw error;
-        // Filter again client-side (the OR-based date filter is permissive)
-        (data ?? []).forEach((r: any) => {
-          const d = r.business_date ?? r.date;
-          if (d && d >= range.from && d <= range.to) all.push(r as SalesRow);
-        });
+        (data ?? []).forEach((r: any) => all.push(r as SalesRow));
       }
       return all;
     },
