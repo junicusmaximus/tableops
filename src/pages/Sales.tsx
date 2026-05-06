@@ -35,6 +35,7 @@ const Sales = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>('all');
   const [salesChannel, setSalesChannel] = useState<string>('all');
   const [trendMode, setTrendMode] = useState<'daily' | 'monthly'>('daily');
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const range = periodKey === 'custom'
     ? { from: customFrom, to: customTo }
