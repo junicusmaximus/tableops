@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, THeader as _TH, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, ShieldAlert, Upload, Plug, Users, AlertCircle, CheckCircle2, Loader2, Trash2, Download } from 'lucide-react';
 import { useEmployeeProfile, useStoreEmployees } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
