@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShieldAlert, Plus, Upload, TrendingUp, TrendingDown, Sparkles, BarChart3, Clock, CalendarDays, Building2 } from 'lucide-react';
+import { ShieldAlert, Plus, Upload, TrendingUp, TrendingDown, Sparkles, BarChart3, Clock, CalendarDays, Building2, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { exportSalesExcel, exportSalesPDF } from '@/lib/salesExport';
+import { toast } from 'sonner';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from 'recharts';
