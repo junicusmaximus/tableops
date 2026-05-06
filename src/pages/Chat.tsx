@@ -6,7 +6,7 @@ import {
   useSendMessage,
   useMarkAsRead,
   useCreateChatRoom,
-  usePinMessage,
+  useCreateDM,
   useUploadChatFile,
   parseMentions,
 } from '@/hooks/useChat';
@@ -17,6 +17,7 @@ import ChatWorkspace from '@/components/chat/ChatWorkspace';
 import ChatSidebar from '@/components/chat/ChatSidebar';
 import ChatMessageArea from '@/components/chat/ChatMessageArea';
 import CreateRoomDialog from '@/components/chat/CreateRoomDialog';
+import NewDMDialog from '@/components/chat/NewDMDialog';
 
 const Chat = () => {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ const Chat = () => {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dmDialogOpen, setDmDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
@@ -34,7 +36,7 @@ const Chat = () => {
   const sendMessage = useSendMessage();
   const markAsRead = useMarkAsRead();
   const createRoom = useCreateChatRoom();
-  const pinMessage = usePinMessage();
+  const createDM = useCreateDM();
   const uploadFile = useUploadChatFile();
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
@@ -46,11 +48,6 @@ const Chat = () => {
     profile_image_url: e.profile_image_url,
     position: e.position,
   }));
-
-  // Find pinned message
-  const pinnedMessage = selectedRoom?.pinned_message_id
-    ? messages.find((m) => m.id === selectedRoom.pinned_message_id)
-    : undefined;
 
   useEffect(() => {
     if (selectedRoomId) {
@@ -64,21 +61,28 @@ const Chat = () => {
     setSearchQuery('');
   };
 
-  const handleSend = (mentionedUserIds?: string[], options?: { messageType?: string }) => {
-    if (!message.trim() || !selectedRoomId) return;
+  const handleSend = (
+    mentionedUserIds?: string[],
+    options?: { messageType?: string; metadata?: Record<string, unknown>; content?: string },
+  ) => {
+    const content = options?.content ?? message;
+    if (!content.trim() || !selectedRoomId) return;
 
-    const contentMentions = parseMentions(message, members);
+    const contentMentions = parseMentions(content, members);
     const allMentions = [...new Set([...(mentionedUserIds ?? []), ...contentMentions])];
 
     sendMessage.mutate(
       {
         roomId: selectedRoomId,
-        content: message.trim(),
+        content: content.trim(),
         mentionedUserIds: allMentions.length > 0 ? allMentions : undefined,
         messageType: options?.messageType,
+        metadata: options?.metadata,
       },
       {
-        onSuccess: () => setMessage(''),
+        onSuccess: () => {
+          if (!options?.content) setMessage('');
+        },
         onError: () => toast.error('메시지 전송에 실패했습니다'),
       }
     );
