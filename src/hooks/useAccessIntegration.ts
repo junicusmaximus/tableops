@@ -163,7 +163,7 @@ export const useImportAccessLogs = () => {
       // chunked insert
       for (let i = 0; i < payload.length; i += 500) {
         const chunk = payload.slice(i, i + 500);
-        const { error } = await supabase.from('access_logs').insert(chunk);
+        const { error } = await supabase.from('access_logs').insert(chunk as any);
         if (error) throw error;
       }
       return batch;
