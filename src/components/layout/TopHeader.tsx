@@ -4,6 +4,7 @@ import { Bell, Search, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications';
+import RoleSwitcher from '@/components/dev/RoleSwitcher';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
