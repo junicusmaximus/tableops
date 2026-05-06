@@ -600,6 +600,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           document_schema: Json
+          document_schema_snapshot: Json | null
           due_date: string | null
           id: string
           recipient_name: string
@@ -610,8 +611,10 @@ export type Database = {
           status: string
           store_id: string
           template_id: string | null
+          template_version_id: string | null
           title: string
           updated_at: string
+          variable_values_snapshot: Json | null
           viewed_at: string | null
         }
         Insert: {
@@ -620,6 +623,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           document_schema?: Json
+          document_schema_snapshot?: Json | null
           due_date?: string | null
           id?: string
           recipient_name: string
@@ -630,8 +634,10 @@ export type Database = {
           status?: string
           store_id: string
           template_id?: string | null
+          template_version_id?: string | null
           title: string
           updated_at?: string
+          variable_values_snapshot?: Json | null
           viewed_at?: string | null
         }
         Update: {
@@ -640,6 +646,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           document_schema?: Json
+          document_schema_snapshot?: Json | null
           due_date?: string | null
           id?: string
           recipient_name?: string
@@ -650,8 +657,10 @@ export type Database = {
           status?: string
           store_id?: string
           template_id?: string | null
+          template_version_id?: string | null
           title?: string
           updated_at?: string
+          variable_values_snapshot?: Json | null
           viewed_at?: string | null
         }
         Relationships: [
@@ -729,8 +738,116 @@ export type Database = {
           },
         ]
       }
+      document_smart_variables: {
+        Row: {
+          allow_manual_override: boolean
+          category: string | null
+          created_at: string
+          default_value: string | null
+          description: string | null
+          display_name: string
+          editable_by: string
+          id: string
+          input_type: string
+          is_custom: boolean
+          required: boolean
+          source_column: string | null
+          source_table: string | null
+          source_type: string
+          template_version_id: string
+          updated_at: string
+          validation_rule: Json | null
+          variable_key: string
+        }
+        Insert: {
+          allow_manual_override?: boolean
+          category?: string | null
+          created_at?: string
+          default_value?: string | null
+          description?: string | null
+          display_name: string
+          editable_by?: string
+          id?: string
+          input_type?: string
+          is_custom?: boolean
+          required?: boolean
+          source_column?: string | null
+          source_table?: string | null
+          source_type?: string
+          template_version_id: string
+          updated_at?: string
+          validation_rule?: Json | null
+          variable_key: string
+        }
+        Update: {
+          allow_manual_override?: boolean
+          category?: string | null
+          created_at?: string
+          default_value?: string | null
+          description?: string | null
+          display_name?: string
+          editable_by?: string
+          id?: string
+          input_type?: string
+          is_custom?: boolean
+          required?: boolean
+          source_column?: string | null
+          source_table?: string | null
+          source_type?: string
+          template_version_id?: string
+          updated_at?: string
+          validation_rule?: Json | null
+          variable_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_smart_variables_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "document_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_template_versions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          smart_variable_schema: Json
+          status: string
+          template_id: string
+          template_schema: Json
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          smart_variable_schema?: Json
+          status?: string
+          template_id: string
+          template_schema?: Json
+          updated_at?: string
+          version_number?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          smart_variable_schema?: Json
+          status?: string
+          template_id?: string
+          template_schema?: Json
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: []
+      }
       document_templates: {
         Row: {
+          active_version_id: string | null
           category: string
           created_at: string
           created_by: string
@@ -744,6 +861,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_version_id?: string | null
           category?: string
           created_at?: string
           created_by: string
@@ -757,6 +875,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_version_id?: string | null
           category?: string
           created_at?: string
           created_by?: string
