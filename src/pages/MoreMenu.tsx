@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Calendar, ClipboardCheck, FileText, TrendingUp, Users,
   AlertTriangle, ShoppingCart, Briefcase, Upload, Gift,
-  BookOpen, Bell, Store, Settings, Coffee, Notebook, Sparkles, Brain
+  BookOpen, Bell, Store, Settings, Coffee, Notebook, Sparkles, Brain, GraduationCap
 } from 'lucide-react';
 
 const menuItems = [
