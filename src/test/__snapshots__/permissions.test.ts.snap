@@ -1,0 +1,245 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`permissions snapshot per role > default settings: boss 1`] = `
+{
+  "canAiReport": true,
+  "canIntegrations": true,
+  "canPermissionSettings": false,
+  "canSales": true,
+  "canStaff": true,
+  "menus": [
+    "dashboard",
+    "today_briefing",
+    "attendance",
+    "work_stats",
+    "my_schedule",
+    "schedule_management",
+    "ai_schedule",
+    "leave",
+    "staff",
+    "checklists",
+    "reports",
+    "sales",
+    "service_notes",
+    "ai_report",
+    "ingredients",
+    "purchase_orders",
+    "documents",
+    "benefits",
+    "glossary",
+    "knowledge",
+    "chat",
+  ],
+  "role": "boss",
+}
+`;
+
+exports[`permissions snapshot per role > default settings: ceo 1`] = `
+{
+  "canAiReport": true,
+  "canIntegrations": true,
+  "canPermissionSettings": true,
+  "canSales": true,
+  "canStaff": true,
+  "menus": [
+    "dashboard",
+    "today_briefing",
+    "attendance",
+    "work_stats",
+    "my_schedule",
+    "schedule_management",
+    "ai_schedule",
+    "leave",
+    "staff",
+    "checklists",
+    "reports",
+    "sales",
+    "service_notes",
+    "ai_report",
+    "ingredients",
+    "purchase_orders",
+    "documents",
+    "benefits",
+    "glossary",
+    "knowledge",
+    "chat",
+  ],
+  "role": "ceo",
+}
+`;
+
+exports[`permissions snapshot per role > default settings: full_time 1`] = `
+{
+  "canAiReport": false,
+  "canIntegrations": false,
+  "canPermissionSettings": false,
+  "canSales": false,
+  "canStaff": false,
+  "menus": [
+    "dashboard",
+    "today_briefing",
+    "attendance",
+    "work_stats",
+    "my_schedule",
+    "leave",
+    "checklists",
+    "reports",
+    "service_notes",
+    "documents",
+    "benefits",
+    "glossary",
+    "knowledge",
+    "chat",
+  ],
+  "role": "full_time",
+}
+`;
+
+exports[`permissions snapshot per role > default settings: hall_staff 1`] = `
+{
+  "canAiReport": false,
+  "canIntegrations": false,
+  "canPermissionSettings": false,
+  "canSales": false,
+  "canStaff": false,
+  "menus": [
+    "dashboard",
+    "today_briefing",
+    "attendance",
+    "work_stats",
+    "my_schedule",
+    "leave",
+    "checklists",
+    "reports",
+    "service_notes",
+    "documents",
+    "benefits",
+    "glossary",
+    "knowledge",
+    "chat",
+  ],
+  "role": "hall_staff",
+}
+`;
+
+exports[`permissions snapshot per role > default settings: kitchen_staff 1`] = `
+{
+  "canAiReport": false,
+  "canIntegrations": false,
+  "canPermissionSettings": false,
+  "canSales": false,
+  "canStaff": false,
+  "menus": [
+    "dashboard",
+    "today_briefing",
+    "attendance",
+    "work_stats",
+    "my_schedule",
+    "leave",
+    "checklists",
+    "reports",
+    "service_notes",
+    "documents",
+    "benefits",
+    "glossary",
+    "knowledge",
+    "chat",
+  ],
+  "role": "kitchen_staff",
+}
+`;
+
+exports[`permissions snapshot per role > default settings: manager 1`] = `
+{
+  "canAiReport": true,
+  "canIntegrations": true,
+  "canPermissionSettings": false,
+  "canSales": true,
+  "canStaff": true,
+  "menus": [
+    "dashboard",
+    "today_briefing",
+    "attendance",
+    "work_stats",
+    "my_schedule",
+    "schedule_management",
+    "ai_schedule",
+    "leave",
+    "staff",
+    "checklists",
+    "reports",
+    "sales",
+    "service_notes",
+    "ai_report",
+    "ingredients",
+    "purchase_orders",
+    "documents",
+    "benefits",
+    "glossary",
+    "knowledge",
+    "chat",
+  ],
+  "role": "manager",
+}
+`;
+
+exports[`permissions snapshot per role > default settings: owner 1`] = `
+{
+  "canAiReport": true,
+  "canIntegrations": true,
+  "canPermissionSettings": false,
+  "canSales": true,
+  "canStaff": true,
+  "menus": [
+    "dashboard",
+    "today_briefing",
+    "attendance",
+    "work_stats",
+    "my_schedule",
+    "schedule_management",
+    "ai_schedule",
+    "leave",
+    "staff",
+    "checklists",
+    "reports",
+    "sales",
+    "service_notes",
+    "ai_report",
+    "ingredients",
+    "purchase_orders",
+    "documents",
+    "benefits",
+    "glossary",
+    "knowledge",
+    "chat",
+  ],
+  "role": "owner",
+}
+`;
+
+exports[`permissions snapshot per role > default settings: part_time 1`] = `
+{
+  "canAiReport": false,
+  "canIntegrations": false,
+  "canPermissionSettings": false,
+  "canSales": false,
+  "canStaff": false,
+  "menus": [
+    "dashboard",
+    "today_briefing",
+    "attendance",
+    "work_stats",
+    "my_schedule",
+    "leave",
+    "checklists",
+    "reports",
+    "service_notes",
+    "documents",
+    "benefits",
+    "glossary",
+    "knowledge",
+    "chat",
+  ],
+  "role": "part_time",
+}
+`;
