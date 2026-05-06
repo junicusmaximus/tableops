@@ -70,15 +70,16 @@ interface ChatMessageAreaProps {
   currentUserId: string | undefined;
   message: string;
   onMessageChange: (val: string) => void;
-  onSend: (mentionedUserIds?: string[], options?: { messageType?: string }) => void;
+  onSend: (
+    mentionedUserIds?: string[],
+    options?: { messageType?: string; metadata?: Record<string, unknown>; content?: string },
+  ) => void;
   isSending: boolean;
   onBack?: () => void;
   showBackButton?: boolean;
   searchQuery: string;
   onSearchQueryChange: (val: string) => void;
   members?: MentionMember[];
-  pinnedMessage?: ChatMessage;
-  onPinMessage?: (messageId: string | null) => void;
   canPin?: boolean;
   onFileUpload?: (file: File) => void;
   isUploading?: boolean;
@@ -98,8 +99,6 @@ const ChatMessageArea = ({
   searchQuery,
   onSearchQueryChange,
   members = [],
-  pinnedMessage,
-  onPinMessage,
   canPin,
   onFileUpload,
   isUploading,
