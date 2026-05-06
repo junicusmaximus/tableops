@@ -104,7 +104,7 @@ export function renderToHtml(schema: DocumentSchema, smartCtx: Record<string, st
       parts.push(`<p>${escapeHtml(applySmartVariables(b.text, smartCtx))}</p>`);
     } else if (b.type === 'divider') {
       parts.push('<hr/>');
-    } else {
+    } else if (b.type === 'field') {
       const v = values[b.id];
       if (b.fieldType === 'signature') {
         if (signature?.method === 'draw' && signature.dataUrl) {
