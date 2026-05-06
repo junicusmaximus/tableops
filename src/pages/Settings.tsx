@@ -233,7 +233,7 @@ const Settings = () => {
                 </CardHeader>
               </Card>
             </Link>
-            {
+            {[
               { name: 'POS 연동', desc: 'POS 시스템과 매출 데이터를 자동으로 동기화합니다', provider: 'POS 제공업체' },
               { name: 'VAN 연동', desc: 'VAN 사를 통해 카드 승인 내역을 자동으로 가져옵니다', provider: 'VAN 제공업체' },
               { name: '예약 플랫폼 연동', desc: '캐치테이블 등 외부 예약 플랫폼과 연동합니다', provider: '예약 플랫폼' },
@@ -264,7 +264,8 @@ const Settings = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))
+            ))}
+            </>
           )}
         </TabsContent>
       </Tabs>
