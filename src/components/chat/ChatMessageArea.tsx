@@ -67,7 +67,7 @@ interface ChatMessageAreaProps {
   currentUserId: string | undefined;
   message: string;
   onMessageChange: (val: string) => void;
-  onSend: (mentionedUserIds?: string[]) => void;
+  onSend: (mentionedUserIds?: string[], options?: { messageType?: string }) => void;
   isSending: boolean;
   onBack?: () => void;
   showBackButton?: boolean;
