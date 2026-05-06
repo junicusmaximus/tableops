@@ -392,6 +392,35 @@ export type Database = {
           },
         ]
       }
+      chat_confirmations: {
+        Row: {
+          confirmed_at: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          confirmed_at?: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          confirmed_at?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_confirmations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_mentions: {
         Row: {
           created_at: string
@@ -435,42 +464,132 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          deleted_at: string | null
           file_name: string | null
           file_type: string | null
           file_url: string | null
           id: string
           message_type: string
+          metadata: Json
+          parent_message_id: string | null
           room_id: string
           sender_id: string
+          updated_at: string
         }
         Insert: {
           content: string
           created_at?: string
+          deleted_at?: string | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null
           id?: string
           message_type?: string
+          metadata?: Json
+          parent_message_id?: string | null
           room_id: string
           sender_id: string
+          updated_at?: string
         }
         Update: {
           content?: string
           created_at?: string
+          deleted_at?: string | null
           file_name?: string | null
           file_type?: string | null
           file_url?: string | null
           id?: string
           message_type?: string
+          metadata?: Json
+          parent_message_id?: string | null
           room_id?: string
           sender_id?: string
+          updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_pinned_messages: {
+        Row: {
+          id: string
+          message_id: string
+          pinned_at: string
+          pinned_by: string
+          room_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          pinned_at?: string
+          pinned_by: string
+          room_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          pinned_at?: string
+          pinned_by?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_pinned_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_pinned_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
             referencedColumns: ["id"]
           },
         ]
@@ -507,19 +626,34 @@ export type Database = {
       chat_room_members: {
         Row: {
           id: string
+          is_pinned: boolean
           joined_at: string
+          last_read_at: string | null
+          muted: boolean
+          notification_enabled: boolean
+          role_in_room: string
           room_id: string
           user_id: string
         }
         Insert: {
           id?: string
+          is_pinned?: boolean
           joined_at?: string
+          last_read_at?: string | null
+          muted?: boolean
+          notification_enabled?: boolean
+          role_in_room?: string
           room_id: string
           user_id: string
         }
         Update: {
           id?: string
+          is_pinned?: boolean
           joined_at?: string
+          last_read_at?: string | null
+          muted?: boolean
+          notification_enabled?: boolean
+          role_in_room?: string
           room_id?: string
           user_id?: string
         }
@@ -535,9 +669,13 @@ export type Database = {
       }
       chat_rooms: {
         Row: {
+          branch_id: string | null
           created_at: string
           created_by: string
+          description: string | null
           id: string
+          is_announcement: boolean
+          is_default: boolean
           name: string
           pinned_at: string | null
           pinned_by: string | null
@@ -547,9 +685,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           created_by: string
+          description?: string | null
           id?: string
+          is_announcement?: boolean
+          is_default?: boolean
           name: string
           pinned_at?: string | null
           pinned_by?: string | null
@@ -559,9 +701,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           created_by?: string
+          description?: string | null
           id?: string
+          is_announcement?: boolean
+          is_default?: boolean
           name?: string
           pinned_at?: string | null
           pinned_by?: string | null
@@ -2738,6 +2884,10 @@ export type Database = {
       can_view_sales: {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
+      }
+      ensure_default_chat_rooms: {
+        Args: { _store_id: string }
+        Returns: undefined
       }
       get_employee_profile_id: {
         Args: { _store_id: string; _user_id: string }
