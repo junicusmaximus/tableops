@@ -16,7 +16,11 @@ import { toast } from 'sonner';
 import {
   Brain, Calendar, AlertTriangle, CheckCircle, Users, Clock,
   ChevronRight, Loader2, Sparkles, RefreshCw, Save, ArrowLeft,
+  Flame, Info, TrendingUp,
 } from 'lucide-react';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
 import { format, addDays, startOfWeek, endOfWeek, addWeeks, eachDayOfInterval } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useCreateShift } from '@/hooks/useShifts';
@@ -28,12 +32,29 @@ interface ScheduleShift {
   start_time: string;
   end_time: string;
   break_minutes: number;
+  bucket_index?: number;
+}
+
+interface TimeBucket {
+  start_time: string;
+  end_time: string;
+  label: string;
+  peak_score: number;
+  peak_level: 'low' | 'medium' | 'high' | 'very_high';
+  peak_label: string;
+  expected_guests: number;
+  reservation_count: number;
+  reserved_guests: number;
+  group_booking: boolean;
+  required: { hall: number; kitchen: number };
+  reason: string;
 }
 
 interface DaySchedule {
   date: string;
   shifts: ScheduleShift[];
   warnings?: string[];
+  time_buckets?: TimeBucket[];
 }
 
 interface EmployeeSummary {
@@ -51,9 +72,11 @@ interface Recommendation {
     warnings: string[];
     shortage_dates: string[];
     leave_reflected: boolean;
+    peak_considered?: boolean;
   };
   schedule: DaySchedule[];
   employee_summary: EmployeeSummary[];
+  peak_considered?: boolean;
 }
 
 type Step = 'settings' | 'loading' | 'result';
@@ -407,6 +430,55 @@ const AIScheduleRecommend = () => {
                         ))}
                       </div>
                     )}
+
+                    {/* Time bucket peak analysis */}
+                    {recommendation.peak_considered && day.time_buckets && day.time_buckets.length > 0 && (
+                      <div className="mb-3 space-y-1.5">
+                        <p className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" /> 시간대별 혼잡도 & 권장 인원
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                          {day.time_buckets.map((b, bi) => {
+                            const color =
+                              b.peak_level === 'very_high' ? 'bg-orange-500/15 border-orange-500/40 text-orange-500' :
+                              b.peak_level === 'high' ? 'bg-amber-500/15 border-amber-500/40 text-amber-500' :
+                              b.peak_level === 'medium' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-600 dark:text-yellow-400' :
+                              'bg-muted/40 border-border text-muted-foreground';
+                            return (
+                              <Popover key={bi}>
+                                <PopoverTrigger asChild>
+                                  <button className={`text-left rounded-md border px-2 py-1.5 hover:opacity-80 transition ${color}`}>
+                                    <div className="flex items-center justify-between gap-1">
+                                      <span className="text-[10px] font-mono">{b.start_time}-{b.end_time}</span>
+                                      {(b.peak_level === 'high' || b.peak_level === 'very_high') && (
+                                        <Flame className="w-3 h-3" />
+                                      )}
+                                    </div>
+                                    <div className="flex items-center justify-between mt-0.5">
+                                      <span className="text-[10px]">{b.peak_label}</span>
+                                      <span className="text-[10px] font-semibold">홀{b.required.hall}/주방{b.required.kitchen}</span>
+                                    </div>
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-72 text-xs">
+                                  <p className="font-semibold mb-1 flex items-center gap-1">
+                                    <Info className="w-3 h-3" /> 추천 사유
+                                  </p>
+                                  <p className="text-muted-foreground leading-relaxed">{b.reason}</p>
+                                  <div className="mt-2 grid grid-cols-2 gap-1 text-[11px]">
+                                    <div>피크 점수: <b>{b.peak_score}</b></div>
+                                    <div>예상 손님: <b>{b.expected_guests}명</b></div>
+                                    <div>예약 건수: <b>{b.reservation_count}</b></div>
+                                    <div>예약 인원: <b>{b.reserved_guests}명</b></div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {day.shifts.map((shift, i) => {
                       const key = `${day.date}-${i}`;
                       const isSelected = selectedShifts[key];
