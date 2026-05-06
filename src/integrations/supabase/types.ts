@@ -511,6 +511,266 @@ export type Database = {
           },
         ]
       }
+      document_audit_logs: {
+        Row: {
+          actor_name: string | null
+          actor_role: string | null
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          request_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          actor_name?: string | null
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          request_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          actor_name?: string | null
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          request_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_audit_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_field_values: {
+        Row: {
+          field_id: string
+          filled_at: string
+          filled_by: string
+          id: string
+          request_id: string
+          value: Json | null
+        }
+        Insert: {
+          field_id: string
+          filled_at?: string
+          filled_by: string
+          id?: string
+          request_id: string
+          value?: Json | null
+        }
+        Update: {
+          field_id?: string
+          filled_at?: string
+          filled_by?: string
+          id?: string
+          request_id?: string
+          value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_field_values_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_requests: {
+        Row: {
+          cancelled_at: string | null
+          category: string | null
+          completed_at: string | null
+          created_at: string
+          document_schema: Json
+          due_date: string | null
+          id: string
+          recipient_name: string
+          recipient_user_id: string
+          rejection_reason: string | null
+          sender_user_id: string
+          sent_at: string | null
+          status: string
+          store_id: string
+          template_id: string | null
+          title: string
+          updated_at: string
+          viewed_at: string | null
+        }
+        Insert: {
+          cancelled_at?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          document_schema?: Json
+          due_date?: string | null
+          id?: string
+          recipient_name: string
+          recipient_user_id: string
+          rejection_reason?: string | null
+          sender_user_id: string
+          sent_at?: string | null
+          status?: string
+          store_id: string
+          template_id?: string | null
+          title: string
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Update: {
+          cancelled_at?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          document_schema?: Json
+          due_date?: string | null
+          id?: string
+          recipient_name?: string
+          recipient_user_id?: string
+          rejection_reason?: string | null
+          sender_user_id?: string
+          sent_at?: string | null
+          status?: string
+          store_id?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_requests_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_signatures: {
+        Row: {
+          consent_accepted: boolean
+          consent_accepted_at: string
+          consent_text: string
+          consent_text_version: string
+          created_at: string
+          document_version_hash: string
+          id: string
+          ip_address: string | null
+          request_id: string
+          signature_image_url: string | null
+          signature_method: string
+          signed_at: string
+          signer_name: string
+          signer_user_id: string
+          typed_name: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          consent_accepted?: boolean
+          consent_accepted_at?: string
+          consent_text: string
+          consent_text_version?: string
+          created_at?: string
+          document_version_hash: string
+          id?: string
+          ip_address?: string | null
+          request_id: string
+          signature_image_url?: string | null
+          signature_method: string
+          signed_at?: string
+          signer_name: string
+          signer_user_id: string
+          typed_name?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          consent_accepted?: boolean
+          consent_accepted_at?: string
+          consent_text?: string
+          consent_text_version?: string
+          created_at?: string
+          document_version_hash?: string
+          id?: string
+          ip_address?: string | null
+          request_id?: string
+          signature_image_url?: string | null
+          signature_method?: string
+          signed_at?: string
+          signer_name?: string
+          signer_user_id?: string
+          typed_name?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_signatures_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_templates: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_system: boolean
+          status: string
+          store_id: string
+          template_schema: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          status?: string
+          store_id: string
+          template_schema?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          status?: string
+          store_id?: string
+          template_schema?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_profiles: {
         Row: {
           bio: string | null
@@ -595,6 +855,41 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      final_documents: {
+        Row: {
+          created_at: string
+          document_hash: string
+          final_html: string
+          final_pdf_url: string | null
+          id: string
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_hash: string
+          final_html: string
+          final_pdf_url?: string | null
+          id?: string
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          document_hash?: string
+          final_html?: string
+          final_pdf_url?: string | null
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_documents_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "document_requests"
             referencedColumns: ["id"]
           },
         ]
