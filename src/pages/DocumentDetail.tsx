@@ -48,13 +48,16 @@ export default function DocumentDetail() {
 
   if (!req) return <p className="text-sm text-muted-foreground p-4">로딩 중...</p>;
 
-  const schema: DocumentSchema = (req.document_schema as any) ?? { blocks: [] };
+  const rawSchema: any = req.document_schema ?? { blocks: [] };
+  const schema: DocumentSchema = { blocks: rawSchema.blocks ?? [] };
+  const embeddedCtx: Record<string, string> = rawSchema.smartContext ?? {};
   const valueMap: Record<string, any> = Object.fromEntries(fieldValues.map((v) => [v.field_id, v.value]));
 
   const smartCtx: Record<string, string> = {
     회사명: '', 매장명: '', 직원명: req.recipient_name, 직급: profile?.position ?? '',
     휴대전화번호: '', 입사일: '', 근무장소: '', 시급: '', 월급: '',
     계약시작일: '', 계약종료일: '', 작성일: req.completed_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+    ...embeddedCtx,
   };
 
   const sigPreview = signature ? {
