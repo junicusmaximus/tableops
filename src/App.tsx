@@ -27,6 +27,10 @@ import ServiceNotes from "@/pages/ServiceNotes";
 import Ingredients from "@/pages/Ingredients";
 import PurchaseOrders from "@/pages/PurchaseOrders";
 import Documents from "@/pages/Documents";
+import DocumentBuilder from "@/pages/DocumentBuilder";
+import DocumentSend from "@/pages/DocumentSend";
+import DocumentSign from "@/pages/DocumentSign";
+import DocumentDetail from "@/pages/DocumentDetail";
 import Benefits from "@/pages/Benefits";
 import Glossary from "@/pages/Glossary";
 import Announcements from "@/pages/Announcements";
@@ -94,6 +98,11 @@ const App = () => (
               <Route path="ingredients" element={<Ingredients />} />
               <Route path="purchase-orders" element={<PurchaseOrders />} />
               <Route path="documents" element={<Documents />} />
+              <Route path="documents/templates/new" element={<DocumentBuilder />} />
+              <Route path="documents/templates/:id" element={<DocumentBuilder />} />
+              <Route path="documents/send/:templateId" element={<DocumentSend />} />
+              <Route path="documents/sign/:id" element={<DocumentSign />} />
+              <Route path="documents/view/:id" element={<DocumentDetail />} />
               <Route path="benefits" element={<Benefits />} />
               <Route path="glossary" element={<Glossary />} />
               <Route path="announcements" element={<Announcements />} />
