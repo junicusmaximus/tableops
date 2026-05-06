@@ -2729,6 +2729,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _rls_rbac_test: { Args: never; Returns: string }
+      _rls_rbac_test_cleanup: { Args: never; Returns: undefined }
       can_manage_sales_settings: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean

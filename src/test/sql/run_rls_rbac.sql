@@ -1,0 +1,11 @@
+-- Run the database-level RLS/RBAC test suite.
+-- Returns 'ok' on success; raises an exception with the failing assertion otherwise.
+--
+-- Usage:
+--   psql -f src/test/sql/run_rls_rbac.sql
+--
+-- The test seeds temporary orgs/brands/stores/users, exercises every
+-- SECURITY DEFINER helper used by RLS policies (has_role, has_role_or_higher,
+-- is_store_member, is_org_member, get_user_*_ids, can_view_sales,
+-- can_manage_sales_settings), then deletes all seeded data.
+SELECT public._rls_rbac_test() AS result;
