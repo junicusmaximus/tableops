@@ -94,8 +94,22 @@ const Settings = () => {
           <TabsTrigger value="integrations"><Plug className="w-4 h-4 mr-1" />연동</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="mt-4">
+        <TabsContent value="profile" className="mt-4 space-y-4">
           <ProfileSettings />
+          <Link to="/settings/consents">
+            <Card className="hover:bg-accent/30 transition-colors cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-primary" />
+                    <CardTitle className="text-base">동의 내역 관리</CardTitle>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <CardDescription>약관 및 개인정보 동의 상태를 확인하고 변경합니다.</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-4 mt-4">
