@@ -160,7 +160,12 @@ const Signup = () => {
                 <ConsentSection role={role} value={consents} onChange={setConsents} />
               )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              {role && !requiredOk && (
+                <p className="text-xs text-destructive text-center">
+                  필수 약관에 모두 동의해야 회원가입이 가능합니다.
+                </p>
+              )}
+              <Button type="submit" className="w-full" disabled={isLoading || !requiredOk}>
                 {isLoading ? '가입 중...' : '회원가입'}
               </Button>
             </form>
