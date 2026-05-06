@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShieldAlert, Plus, Upload, TrendingUp, TrendingDown, Sparkles, BarChart3, Clock, CalendarDays, Building2 } from 'lucide-react';
+import { ShieldAlert, Plus, Upload, TrendingUp, TrendingDown, Sparkles, BarChart3, Clock, CalendarDays, Building2, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { exportSalesExcel, exportSalesPDF } from '@/lib/salesExport';
+import { toast } from 'sonner';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from 'recharts';
@@ -33,6 +35,7 @@ const Sales = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>('all');
   const [salesChannel, setSalesChannel] = useState<string>('all');
   const [trendMode, setTrendMode] = useState<'daily' | 'monthly'>('daily');
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const range = periodKey === 'custom'
     ? { from: customFrom, to: customTo }
@@ -112,19 +115,52 @@ const Sales = () => {
     { label: '이번 월', total: yoy.currentTotal },
   ];
 
+  const storeLabel = storeId === 'all' ? '전체 매장' : (stores.find((s) => s.id === storeId)?.name ?? '-');
+
+  const handleExcelExport = () => {
+    try {
+      exportSalesExcel({ rows, from: range.from, to: range.to, storeLabel, stores });
+      toast.success('Excel 파일이 다운로드되었습니다.');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Excel 내보내기 실패');
+    }
+  };
+
+  const handlePdfExport = async () => {
+    try {
+      setExportingPdf(true);
+      await exportSalesPDF('sales-dashboard-export', range.from, range.to, storeLabel);
+      toast.success('PDF 파일이 다운로드되었습니다.');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'PDF 내보내기 실패');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold">매출 분석</h1>
           <p className="text-muted-foreground text-sm mt-1">기간별·채널별 매출 추이와 인사이트</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={handleExcelExport} disabled={rows.length === 0}>
+            <FileSpreadsheet className="w-4 h-4 mr-1" />Excel 내보내기
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePdfExport} disabled={rows.length === 0 || exportingPdf}>
+            {exportingPdf ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileText className="w-4 h-4 mr-1" />}
+            PDF 내보내기
+          </Button>
           <Link to="/sales/import"><Button variant="outline" size="sm"><Upload className="w-4 h-4 mr-1" />CSV 업로드</Button></Link>
           <Link to="/sales/entry"><Button size="sm"><Plus className="w-4 h-4 mr-1" />매출 입력</Button></Link>
         </div>
       </div>
+
+      <div id="sales-dashboard-export" className="space-y-4 bg-background p-1">
+
 
       {/* Filters */}
       <Card>
@@ -343,6 +379,7 @@ const Sales = () => {
           )}
         </>
       )}
+      </div>
     </div>
   );
 };
