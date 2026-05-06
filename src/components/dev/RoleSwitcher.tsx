@@ -20,10 +20,25 @@ import {
 
 const TEST_ROLES: AppRole[] = ['ceo', 'manager', 'full_time', 'part_time', 'hall_staff', 'kitchen_staff'];
 
+// Show only in dev/staging — hidden on production domains
+const isDevOrStaging = (): boolean => {
+  if (import.meta.env.DEV) return true;
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return (
+    host === 'localhost' ||
+    host.endsWith('.lovableproject.com') ||
+    host.endsWith('.lovable.app') // includes id-preview--*.lovable.app (staging)
+      && !host.endsWith('.app.lovable.app') // safety placeholder
+  ) && !host.startsWith('app.'); // exclude prod custom subdomains like app.<custom>
+};
+
 const RoleSwitcher = () => {
   const override = useRoleOverride();
   const current = useCurrentRole();
   const [open, setOpen] = useState(false);
+
+  if (!isDevOrStaging()) return null;
 
   const apply = (role: AppRole | null) => {
     setRoleOverride(role);
