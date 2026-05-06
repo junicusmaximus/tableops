@@ -523,6 +523,12 @@ const ChatMessageArea = ({
                 }
               />
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
             >
               <Paperclip className="w-4 h-4" />
             </Button>
