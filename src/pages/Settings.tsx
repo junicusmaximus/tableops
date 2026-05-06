@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone, User } from 'lucide-react';
+import { Settings as SettingsIcon, Store, Plug, Info, ShieldAlert, Bell, CalendarDays, ClipboardCheck, FileText, Megaphone, User, DoorOpen, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useIsManager } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
@@ -217,7 +218,22 @@ const Settings = () => {
               </CardContent>
             </Card>
           ) : (
-            [
+            <>
+            <Link to="/settings/access-integration">
+              <Card className="hover:bg-accent/30 transition-colors cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DoorOpen className="w-5 h-5 text-primary" />
+                      <CardTitle className="text-base">출입 시스템 연동</CardTitle>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <CardDescription>ADT캡스, 세콤/에스원, KT텔레캅 등 출입기록을 근태 자료로 활용합니다.</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+            {
               { name: 'POS 연동', desc: 'POS 시스템과 매출 데이터를 자동으로 동기화합니다', provider: 'POS 제공업체' },
               { name: 'VAN 연동', desc: 'VAN 사를 통해 카드 승인 내역을 자동으로 가져옵니다', provider: 'VAN 제공업체' },
               { name: '예약 플랫폼 연동', desc: '캐치테이블 등 외부 예약 플랫폼과 연동합니다', provider: '예약 플랫폼' },
