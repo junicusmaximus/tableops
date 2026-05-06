@@ -10,8 +10,12 @@ import ProfileCard from '@/components/profile/ProfileCard';
 import MentionDropdown from '@/components/chat/MentionDropdown';
 import PinnedMessage from '@/components/chat/PinnedMessage';
 import FilePreview from '@/components/chat/FilePreview';
+import MessageReactions from '@/components/chat/MessageReactions';
+import ConfirmationCard from '@/components/chat/ConfirmationCard';
 import type { ChatRoom, ChatMessage } from '@/hooks/useChat';
 import type { MentionMember } from '@/components/chat/MentionDropdown';
+import { useChatReactions } from '@/hooks/useChatReactions';
+import { useChatConfirmations } from '@/hooks/useChatConfirmations';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
@@ -63,7 +67,7 @@ interface ChatMessageAreaProps {
   currentUserId: string | undefined;
   message: string;
   onMessageChange: (val: string) => void;
-  onSend: (mentionedUserIds?: string[]) => void;
+  onSend: (mentionedUserIds?: string[], options?: { messageType?: string }) => void;
   isSending: boolean;
   onBack?: () => void;
   showBackButton?: boolean;
@@ -103,6 +107,23 @@ const ChatMessageArea = ({
   const [mentionQuery, setMentionQuery] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [pendingMentions, setPendingMentions] = useState<string[]>([]);
+  const [confirmRequest, setConfirmRequest] = useState(false);
+
+  const messageIds = messages.map((m) => m.id);
+  const { data: reactions = [] } = useChatReactions(room?.id ?? null, messageIds);
+  const { data: confirmations = [] } = useChatConfirmations(room?.id ?? null, messageIds);
+  const reactionsByMessage = reactions.reduce<Record<string, typeof reactions>>((acc, r) => {
+    (acc[r.message_id] ||= []).push(r);
+    return acc;
+  }, {});
+  const confirmsByMessage = confirmations.reduce<Record<string, typeof confirmations>>((acc, c) => {
+    (acc[c.message_id] ||= []).push(c);
+    return acc;
+  }, {});
+  const memberNameMap = members.reduce<Record<string, string>>((acc, m) => {
+    acc[m.user_id] = m.full_name;
+    return acc;
+  }, {});
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -144,10 +165,13 @@ const ChatMessageArea = ({
 
   const handleSend = () => {
     if (!message.trim()) return;
-    // Also detect mentions from final message content
     const allMentions = [...new Set(pendingMentions)];
-    onSend(allMentions.length > 0 ? allMentions : undefined);
+    onSend(
+      allMentions.length > 0 ? allMentions : undefined,
+      confirmRequest ? { messageType: 'confirmation' } : undefined,
+    );
     setPendingMentions([]);
+    setConfirmRequest(false);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -386,6 +410,23 @@ const ChatMessageArea = ({
                             <FilePreview fileUrl={msg.file_url} fileName={msg.file_name} fileType={msg.file_type} />
                           )}
 
+                          {/* Confirmation request card */}
+                          {msg.message_type === 'confirmation' && (
+                            <ConfirmationCard
+                              messageId={msg.id}
+                              confirmations={confirmsByMessage[msg.id] ?? []}
+                              currentUserId={currentUserId}
+                              confirmerNames={memberNameMap}
+                            />
+                          )}
+
+                          {/* Reactions */}
+                          <MessageReactions
+                            messageId={msg.id}
+                            reactions={reactionsByMessage[msg.id] ?? []}
+                            currentUserId={currentUserId}
+                          />
+
                           {/* Read receipt */}
                           {isMine && (
                             <ReadReceiptPopover
@@ -423,7 +464,22 @@ const ChatMessageArea = ({
       </ScrollArea>
 
       {/* Input area */}
-      <div className="px-4 py-3 border-t border-border">
+      <div className="px-4 py-3 border-t border-border space-y-2">
+        {canPin && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmRequest((v) => !v)}
+              className={`text-[11px] px-2 py-1 rounded-full border transition-colors ${
+                confirmRequest
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              ✅ 확인 요청 {confirmRequest ? 'ON' : 'OFF'}
+            </button>
+          </div>
+        )}
         <div className="relative">
           <MentionDropdown
             members={members}

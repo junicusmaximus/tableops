@@ -253,6 +253,8 @@ export const useSendMessage = () => {
       fileName,
       fileType,
       mentionedUserIds,
+      messageType = 'text',
+      metadata,
     }: {
       roomId: string;
       content: string;
@@ -260,6 +262,8 @@ export const useSendMessage = () => {
       fileName?: string;
       fileType?: string;
       mentionedUserIds?: string[];
+      messageType?: string;
+      metadata?: Record<string, unknown>;
     }) => {
       if (!user) throw new Error('Not authenticated');
 
@@ -268,6 +272,8 @@ export const useSendMessage = () => {
         room_id: roomId,
         sender_id: user.id,
         content,
+        message_type: messageType,
+        metadata: metadata ?? {},
         file_url: fileUrl ?? null,
         file_name: fileName ?? null,
         file_type: fileType ?? null,

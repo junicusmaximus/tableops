@@ -64,10 +64,9 @@ const Chat = () => {
     setSearchQuery('');
   };
 
-  const handleSend = (mentionedUserIds?: string[]) => {
+  const handleSend = (mentionedUserIds?: string[], options?: { messageType?: string }) => {
     if (!message.trim() || !selectedRoomId) return;
 
-    // Also detect mentions from message content
     const contentMentions = parseMentions(message, members);
     const allMentions = [...new Set([...(mentionedUserIds ?? []), ...contentMentions])];
 
@@ -76,6 +75,7 @@ const Chat = () => {
         roomId: selectedRoomId,
         content: message.trim(),
         mentionedUserIds: allMentions.length > 0 ? allMentions : undefined,
+        messageType: options?.messageType,
       },
       {
         onSuccess: () => setMessage(''),
