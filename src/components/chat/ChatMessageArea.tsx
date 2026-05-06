@@ -18,6 +18,7 @@ import { useChatPinnedMessages, useTogglePin } from '@/hooks/useChatPinnedMessag
 import type { ChatRoom, ChatMessage } from '@/hooks/useChat';
 import type { MentionMember } from '@/components/chat/MentionDropdown';
 import { useChatReactions } from '@/hooks/useChatReactions';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useChatConfirmations } from '@/hooks/useChatConfirmations';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
