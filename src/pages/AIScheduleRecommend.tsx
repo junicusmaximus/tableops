@@ -32,12 +32,29 @@ interface ScheduleShift {
   start_time: string;
   end_time: string;
   break_minutes: number;
+  bucket_index?: number;
+}
+
+interface TimeBucket {
+  start_time: string;
+  end_time: string;
+  label: string;
+  peak_score: number;
+  peak_level: 'low' | 'medium' | 'high' | 'very_high';
+  peak_label: string;
+  expected_guests: number;
+  reservation_count: number;
+  reserved_guests: number;
+  group_booking: boolean;
+  required: { hall: number; kitchen: number };
+  reason: string;
 }
 
 interface DaySchedule {
   date: string;
   shifts: ScheduleShift[];
   warnings?: string[];
+  time_buckets?: TimeBucket[];
 }
 
 interface EmployeeSummary {
@@ -55,9 +72,11 @@ interface Recommendation {
     warnings: string[];
     shortage_dates: string[];
     leave_reflected: boolean;
+    peak_considered?: boolean;
   };
   schedule: DaySchedule[];
   employee_summary: EmployeeSummary[];
+  peak_considered?: boolean;
 }
 
 type Step = 'settings' | 'loading' | 'result';
