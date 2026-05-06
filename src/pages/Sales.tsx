@@ -198,13 +198,15 @@ const Sales = () => {
             <EmptyState
               title="매출 분석을 위한 데이터가 없습니다."
               description="매출 데이터를 직접 입력하거나 CSV로 업로드해주세요."
-              icon={<BarChart3 className="w-10 h-10" />}
+              icon={BarChart3}
+              action={
+                <div className="flex gap-2">
+                  <Link to="/sales/entry"><Button size="sm"><Plus className="w-4 h-4 mr-1" />매출 직접 입력</Button></Link>
+                  <Link to="/sales/import"><Button variant="outline" size="sm"><Upload className="w-4 h-4 mr-1" />CSV 업로드</Button></Link>
+                  <Link to="/settings"><Button variant="ghost" size="sm">연동 설정으로 이동</Button></Link>
+                </div>
+              }
             />
-            <div className="flex justify-center gap-2 mt-4">
-              <Link to="/sales/entry"><Button size="sm"><Plus className="w-4 h-4 mr-1" />매출 직접 입력</Button></Link>
-              <Link to="/sales/import"><Button variant="outline" size="sm"><Upload className="w-4 h-4 mr-1" />CSV 업로드</Button></Link>
-              <Link to="/settings"><Button variant="ghost" size="sm">연동 설정으로 이동</Button></Link>
-            </div>
           </CardContent>
         </Card>
       ) : (
