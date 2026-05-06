@@ -20,10 +20,23 @@ import {
 
 const TEST_ROLES: AppRole[] = ['ceo', 'manager', 'full_time', 'part_time', 'hall_staff', 'kitchen_staff'];
 
+// Show only in dev/staging — hidden on production (published Lovable app or custom domain)
+const isDevOrStaging = (): boolean => {
+  if (import.meta.env.DEV) return true;
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') return true;
+  if (host.endsWith('.lovableproject.com')) return true; // sandbox preview
+  if (host.startsWith('id-preview--') && host.endsWith('.lovable.app')) return true; // staging preview
+  return false;
+};
+
 const RoleSwitcher = () => {
   const override = useRoleOverride();
   const current = useCurrentRole();
   const [open, setOpen] = useState(false);
+
+  if (!isDevOrStaging()) return null;
 
   const apply = (role: AppRole | null) => {
     setRoleOverride(role);
