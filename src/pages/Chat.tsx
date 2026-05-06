@@ -160,6 +160,7 @@ const Chat = () => {
     canPin: isManager,
     onFileUpload: handleFileUpload,
     isUploading: uploadFile.isPending,
+    myName: profile?.full_name,
   };
 
   return (
