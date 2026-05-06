@@ -12,7 +12,7 @@ describe('RoleSwitcher visibility (production must hide)', () => {
   };
 
   beforeEach(() => {
-    vi.stubEnv('DEV', false as unknown as string);
+    vi.stubEnv("DEV", "" as any);
   });
 
   afterEach(() => {
@@ -52,7 +52,7 @@ describe('RoleSwitcher visibility (production must hide)', () => {
   });
 
   it('SHOWS when import.meta.env.DEV is true (local dev)', () => {
-    vi.stubEnv('DEV', true as unknown as string);
+    vi.stubEnv("DEV", "true" as any);
     setHost('tableops.com'); // even on prod-looking host, dev build wins
     expect(isDevOrStagingHost()).toBe(true);
   });
