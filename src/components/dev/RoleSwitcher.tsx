@@ -20,17 +20,15 @@ import {
 
 const TEST_ROLES: AppRole[] = ['ceo', 'manager', 'full_time', 'part_time', 'hall_staff', 'kitchen_staff'];
 
-// Show only in dev/staging — hidden on production domains
+// Show only in dev/staging — hidden on production (published Lovable app or custom domain)
 const isDevOrStaging = (): boolean => {
   if (import.meta.env.DEV) return true;
   if (typeof window === 'undefined') return false;
   const host = window.location.hostname;
-  return (
-    host === 'localhost' ||
-    host.endsWith('.lovableproject.com') ||
-    host.endsWith('.lovable.app') // includes id-preview--*.lovable.app (staging)
-      && !host.endsWith('.app.lovable.app') // safety placeholder
-  ) && !host.startsWith('app.'); // exclude prod custom subdomains like app.<custom>
+  if (host === 'localhost' || host === '127.0.0.1') return true;
+  if (host.endsWith('.lovableproject.com')) return true; // sandbox preview
+  if (host.startsWith('id-preview--') && host.endsWith('.lovable.app')) return true; // staging preview
+  return false;
 };
 
 const RoleSwitcher = () => {
