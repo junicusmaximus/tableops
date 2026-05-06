@@ -8,10 +8,13 @@ import ReadReceiptPopover from '@/components/chat/ReadReceiptPopover';
 import RoleBadge from '@/components/common/RoleBadge';
 import ProfileCard from '@/components/profile/ProfileCard';
 import MentionDropdown from '@/components/chat/MentionDropdown';
-import PinnedMessage from '@/components/chat/PinnedMessage';
+import PinnedMessagesPanel from '@/components/chat/PinnedMessagesPanel';
 import FilePreview from '@/components/chat/FilePreview';
 import MessageReactions from '@/components/chat/MessageReactions';
 import ConfirmationCard from '@/components/chat/ConfirmationCard';
+import OperationalCard from '@/components/chat/OperationalCard';
+import OperationalCardComposer from '@/components/chat/OperationalCardComposer';
+import { useChatPinnedMessages, useTogglePin } from '@/hooks/useChatPinnedMessages';
 import type { ChatRoom, ChatMessage } from '@/hooks/useChat';
 import type { MentionMember } from '@/components/chat/MentionDropdown';
 import { useChatReactions } from '@/hooks/useChatReactions';
@@ -67,15 +70,16 @@ interface ChatMessageAreaProps {
   currentUserId: string | undefined;
   message: string;
   onMessageChange: (val: string) => void;
-  onSend: (mentionedUserIds?: string[], options?: { messageType?: string }) => void;
+  onSend: (
+    mentionedUserIds?: string[],
+    options?: { messageType?: string; metadata?: Record<string, unknown>; content?: string },
+  ) => void;
   isSending: boolean;
   onBack?: () => void;
   showBackButton?: boolean;
   searchQuery: string;
   onSearchQueryChange: (val: string) => void;
   members?: MentionMember[];
-  pinnedMessage?: ChatMessage;
-  onPinMessage?: (messageId: string | null) => void;
   canPin?: boolean;
   onFileUpload?: (file: File) => void;
   isUploading?: boolean;
@@ -95,8 +99,6 @@ const ChatMessageArea = ({
   searchQuery,
   onSearchQueryChange,
   members = [],
-  pinnedMessage,
-  onPinMessage,
   canPin,
   onFileUpload,
   isUploading,
@@ -110,6 +112,13 @@ const ChatMessageArea = ({
   const [confirmRequest, setConfirmRequest] = useState(false);
 
   const messageIds = messages.map((m) => m.id);
+  const { data: pins = [] } = useChatPinnedMessages(room?.id ?? null);
+  const togglePin = useTogglePin();
+  const pinnedIds = new Set(pins.map((p) => p.message_id));
+  const handleTogglePin = (msgId: string, action: 'pin' | 'unpin') => {
+    if (!room) return;
+    togglePin.mutate({ roomId: room.id, messageId: msgId, action });
+  };
   const { data: reactions = [] } = useChatReactions(room?.id ?? null, messageIds);
   const { data: confirmations = [] } = useChatConfirmations(room?.id ?? null, messageIds);
   const reactionsByMessage = reactions.reduce<Record<string, typeof reactions>>((acc, r) => {
@@ -270,11 +279,11 @@ const ChatMessageArea = ({
         </div>
       )}
 
-      {/* Pinned message */}
-      <PinnedMessage
-        message={pinnedMessage}
-        onUnpin={() => onPinMessage?.(null)}
+      {/* Pinned messages panel */}
+      <PinnedMessagesPanel
+        pins={pins}
         canUnpin={!!canPin}
+        onUnpin={(id) => handleTogglePin(id, 'unpin')}
       />
 
       {/* Messages */}
@@ -420,6 +429,14 @@ const ChatMessageArea = ({
                             />
                           )}
 
+                          {/* Operational card */}
+                          {msg.message_type === 'card' && (
+                            <OperationalCard
+                              cardType={(msg as any).metadata?.cardType ?? 'announce'}
+                              metadata={(msg as any).metadata ?? {}}
+                            />
+                          )}
+
                           {/* Reactions */}
                           <MessageReactions
                             messageId={msg.id}
@@ -448,10 +465,17 @@ const ChatMessageArea = ({
                         )}
                       </div>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onPinMessage?.(msg.id)}>
-                          <Pin className="w-3.5 h-3.5 mr-2" />
-                          메시지 고정
-                        </DropdownMenuItem>
+                        {pinnedIds.has(msg.id) ? (
+                          <DropdownMenuItem onClick={() => handleTogglePin(msg.id, 'unpin')}>
+                            <Pin className="w-3.5 h-3.5 mr-2" />
+                            고정 해제
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handleTogglePin(msg.id, 'pin')}>
+                            <Pin className="w-3.5 h-3.5 mr-2" />
+                            메시지 고정
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
@@ -488,6 +512,17 @@ const ChatMessageArea = ({
             visible={showMentions}
           />
           <div className="flex items-end gap-2 bg-muted/40 rounded-xl border border-border px-3 py-2 focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
+            {canPin && (
+              <OperationalCardComposer
+                onSend={(cardType, metadata) =>
+                  onSend(undefined, {
+                    messageType: 'card',
+                    metadata: { cardType, ...metadata },
+                    content: `[${cardType}] ${(metadata.title as string) ?? ''}`,
+                  })
+                }
+              />
+            )}
             <Button
               variant="ghost"
               size="icon"

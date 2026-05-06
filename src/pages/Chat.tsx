@@ -6,7 +6,7 @@ import {
   useSendMessage,
   useMarkAsRead,
   useCreateChatRoom,
-  usePinMessage,
+  useCreateDM,
   useUploadChatFile,
   parseMentions,
 } from '@/hooks/useChat';
@@ -17,6 +17,7 @@ import ChatWorkspace from '@/components/chat/ChatWorkspace';
 import ChatSidebar from '@/components/chat/ChatSidebar';
 import ChatMessageArea from '@/components/chat/ChatMessageArea';
 import CreateRoomDialog from '@/components/chat/CreateRoomDialog';
+import NewDMDialog from '@/components/chat/NewDMDialog';
 
 const Chat = () => {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ const Chat = () => {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dmDialogOpen, setDmDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
@@ -34,7 +36,7 @@ const Chat = () => {
   const sendMessage = useSendMessage();
   const markAsRead = useMarkAsRead();
   const createRoom = useCreateChatRoom();
-  const pinMessage = usePinMessage();
+  const createDM = useCreateDM();
   const uploadFile = useUploadChatFile();
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
@@ -46,11 +48,6 @@ const Chat = () => {
     profile_image_url: e.profile_image_url,
     position: e.position,
   }));
-
-  // Find pinned message
-  const pinnedMessage = selectedRoom?.pinned_message_id
-    ? messages.find((m) => m.id === selectedRoom.pinned_message_id)
-    : undefined;
 
   useEffect(() => {
     if (selectedRoomId) {
@@ -64,21 +61,28 @@ const Chat = () => {
     setSearchQuery('');
   };
 
-  const handleSend = (mentionedUserIds?: string[], options?: { messageType?: string }) => {
-    if (!message.trim() || !selectedRoomId) return;
+  const handleSend = (
+    mentionedUserIds?: string[],
+    options?: { messageType?: string; metadata?: Record<string, unknown>; content?: string },
+  ) => {
+    const content = options?.content ?? message;
+    if (!content.trim() || !selectedRoomId) return;
 
-    const contentMentions = parseMentions(message, members);
+    const contentMentions = parseMentions(content, members);
     const allMentions = [...new Set([...(mentionedUserIds ?? []), ...contentMentions])];
 
     sendMessage.mutate(
       {
         roomId: selectedRoomId,
-        content: message.trim(),
+        content: content.trim(),
         mentionedUserIds: allMentions.length > 0 ? allMentions : undefined,
         messageType: options?.messageType,
+        metadata: options?.metadata,
       },
       {
-        onSuccess: () => setMessage(''),
+        onSuccess: () => {
+          if (!options?.content) setMessage('');
+        },
         onError: () => toast.error('메시지 전송에 실패했습니다'),
       }
     );
@@ -107,14 +111,17 @@ const Chat = () => {
     }
   };
 
-  const handlePinMessage = (messageId: string | null) => {
-    if (!selectedRoomId) return;
-    pinMessage.mutate(
-      { roomId: selectedRoomId, messageId },
+  const handleStartDM = (otherUserId: string, otherName: string) => {
+    createDM.mutate(
+      { otherUserId, otherName },
       {
-        onSuccess: () => toast.success(messageId ? '메시지가 고정되었습니다' : '고정이 해제되었습니다'),
-        onError: () => toast.error('작업에 실패했습니다'),
-      }
+        onSuccess: (room: any) => {
+          setSelectedRoomId(room.id);
+          setDmDialogOpen(false);
+          setMobileView('chat');
+        },
+        onError: () => toast.error('대화를 시작할 수 없습니다'),
+      },
     );
   };
 
@@ -150,8 +157,6 @@ const Chat = () => {
     searchQuery,
     onSearchQueryChange: setSearchQuery,
     members,
-    pinnedMessage,
-    onPinMessage: handlePinMessage,
     canPin: isManager,
     onFileUpload: handleFileUpload,
     isUploading: uploadFile.isPending,
@@ -169,6 +174,7 @@ const Chat = () => {
             selectedRoomId={selectedRoomId}
             onSelectRoom={handleSelectRoom}
             onCreateRoom={() => setDialogOpen(true)}
+            onStartDM={() => setDmDialogOpen(true)}
           />
         </div>
         <div className="flex-1">
@@ -185,6 +191,7 @@ const Chat = () => {
             selectedRoomId={selectedRoomId}
             onSelectRoom={handleSelectRoom}
             onCreateRoom={() => setDialogOpen(true)}
+            onStartDM={() => setDmDialogOpen(true)}
           />
         ) : (
           <ChatMessageArea {...messageAreaProps} onBack={handleBack} showBackButton />
@@ -196,6 +203,14 @@ const Chat = () => {
         onOpenChange={setDialogOpen}
         onCreateRoom={handleCreateRoom}
         isPending={createRoom.isPending}
+      />
+
+      <NewDMDialog
+        open={dmDialogOpen}
+        onOpenChange={setDmDialogOpen}
+        members={members.filter((m) => m.user_id && m.user_id !== user?.id) as any}
+        onSelect={(m) => m.user_id && handleStartDM(m.user_id, m.full_name)}
+        isPending={createDM.isPending}
       />
     </div>
   );
