@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -37,6 +38,37 @@ export const SIGNUP_ROLES: { value: AppRole; label: string }[] = [
   { value: 'part_time', label: '파트타이머' },
 ];
 
+// ===== Dev-only role override (client-side preview only) =====
+const ROLE_OVERRIDE_KEY = 'tableops:role-override';
+const ROLE_OVERRIDE_EVENT = 'tableops:role-override-changed';
+
+export const getRoleOverride = (): AppRole | null => {
+  if (typeof window === 'undefined') return null;
+  const v = localStorage.getItem(ROLE_OVERRIDE_KEY);
+  return v && Object.keys(ROLE_LABELS).includes(v) ? (v as AppRole) : null;
+};
+
+export const setRoleOverride = (role: AppRole | null) => {
+  if (typeof window === 'undefined') return;
+  if (role) localStorage.setItem(ROLE_OVERRIDE_KEY, role);
+  else localStorage.removeItem(ROLE_OVERRIDE_KEY);
+  window.dispatchEvent(new Event(ROLE_OVERRIDE_EVENT));
+};
+
+export const useRoleOverride = (): AppRole | null => {
+  const [override, setOverride] = useState<AppRole | null>(getRoleOverride);
+  useEffect(() => {
+    const handler = () => setOverride(getRoleOverride());
+    window.addEventListener(ROLE_OVERRIDE_EVENT, handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener(ROLE_OVERRIDE_EVENT, handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, []);
+  return override;
+};
+
 export const useUserRole = () => {
   const { user } = useAuth();
 
@@ -60,6 +92,10 @@ export const useCurrentRole = (): AppRole | null => {
   const { user } = useAuth();
   const { data: roles, isLoading: rolesLoading } = useUserRole();
   const { data: profile } = useEmployeeProfile();
+  const override = useRoleOverride();
+
+  // Dev-only override takes precedence
+  if (override) return override;
 
   // If roles loaded and found, use them
   if (roles && roles.length > 0) {
