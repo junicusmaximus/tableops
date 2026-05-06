@@ -32,13 +32,13 @@ DECLARE
   store_b1 uuid := '22222222-2222-2222-2222-2222222222b1';
 
   -- Users
-  u_ceo  uuid := 'aaaaaaaa-0000-0000-0000-00000000ce0a';  -- CEO of org A
-  u_owner uuid := 'aaaaaaaa-0000-0000-0000-0000000own0a'; -- Owner role (cross-brand admin)
-  u_boss uuid := 'aaaaaaaa-0000-0000-0000-000000bossa1';  -- Boss of store_a1
-  u_mgr  uuid := 'aaaaaaaa-0000-0000-0000-0000000mgra1';  -- Manager of store_a1
-  u_ft   uuid := 'aaaaaaaa-0000-0000-0000-00000000fta1';  -- Full-time at store_a1
-  u_pt   uuid := 'aaaaaaaa-0000-0000-0000-00000000pta1';  -- Part-timer at store_a1
-  u_b_mgr uuid := 'bbbbbbbb-0000-0000-0000-0000000mgrb1'; -- Manager of store_b1 (other org)
+  u_ceo  uuid := 'aaaaaaaa-0000-0000-0000-0000000000c0';  -- CEO of org A
+  u_owner uuid := 'aaaaaaaa-0000-0000-0000-00000000000d'; -- Owner role (cross-brand admin)
+  u_boss uuid := 'aaaaaaaa-0000-0000-0000-0000000000b0';  -- Boss of store_a1
+  u_mgr  uuid := 'aaaaaaaa-0000-0000-0000-00000000a001';  -- Manager of store_a1
+  u_ft   uuid := 'aaaaaaaa-0000-0000-0000-0000000ff001';  -- Full-time at store_a1
+  u_pt   uuid := 'aaaaaaaa-0000-0000-0000-00000000a002';  -- Part-timer at store_a1
+  u_b_mgr uuid := 'bbbbbbbb-0000-0000-0000-00000000b001'; -- Manager of store_b1 (other org)
 
   v boolean;
   cnt int;
