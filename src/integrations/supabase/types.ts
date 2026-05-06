@@ -1453,6 +1453,63 @@ export type Database = {
           },
         ]
       }
+      knowledge_articles: {
+        Row: {
+          attachments: Json
+          category: string
+          content: Json
+          created_at: string
+          created_by: string
+          id: string
+          importance: string
+          organization_id: string | null
+          require_acknowledgement: boolean
+          status: string
+          store_id: string
+          summary: string | null
+          target_roles: string[]
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          attachments?: Json
+          category?: string
+          content?: Json
+          created_at?: string
+          created_by: string
+          id?: string
+          importance?: string
+          organization_id?: string | null
+          require_acknowledgement?: boolean
+          status?: string
+          store_id: string
+          summary?: string | null
+          target_roles?: string[]
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          attachments?: Json
+          category?: string
+          content?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          importance?: string
+          organization_id?: string | null
+          require_acknowledgement?: boolean
+          status?: string
+          store_id?: string
+          summary?: string | null
+          target_roles?: string[]
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       leave_requests: {
         Row: {
           applicant_user_id: string
@@ -1506,6 +1563,42 @@ export type Database = {
           },
         ]
       }
+      manual_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          article_id: string
+          article_version: number
+          id: string
+          ip_address: string | null
+          signature_data: string | null
+          signature_method: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          article_id: string
+          article_version: number
+          id?: string
+          ip_address?: string | null
+          signature_data?: string | null
+          signature_method?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          article_id?: string
+          article_version?: number
+          id?: string
+          ip_address?: string | null
+          signature_data?: string | null
+          signature_method?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           enable_access_integration: boolean
@@ -1517,8 +1610,10 @@ export type Database = {
           enable_inventory: boolean
           enable_leave_request: boolean
           enable_leave_result: boolean
+          enable_recipe_update: boolean
           enable_schedule_change: boolean
           enable_schedule_new: boolean
+          enable_training: boolean
           id: string
           updated_at: string
           user_id: string
@@ -1533,8 +1628,10 @@ export type Database = {
           enable_inventory?: boolean
           enable_leave_request?: boolean
           enable_leave_result?: boolean
+          enable_recipe_update?: boolean
           enable_schedule_change?: boolean
           enable_schedule_new?: boolean
+          enable_training?: boolean
           id?: string
           updated_at?: string
           user_id: string
@@ -1549,8 +1646,10 @@ export type Database = {
           enable_inventory?: boolean
           enable_leave_request?: boolean
           enable_leave_result?: boolean
+          enable_recipe_update?: boolean
           enable_schedule_change?: boolean
           enable_schedule_new?: boolean
+          enable_training?: boolean
           id?: string
           updated_at?: string
           user_id?: string
@@ -1679,6 +1778,231 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quiz_attempts: {
+        Row: {
+          answers: Json
+          course_id: string
+          id: string
+          passed: boolean
+          score: number
+          submitted_at: string
+          total_points: number
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          course_id: string
+          id?: string
+          passed?: boolean
+          score?: number
+          submitted_at?: string
+          total_points?: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          course_id?: string
+          id?: string
+          passed?: boolean
+          score?: number
+          submitted_at?: string
+          total_points?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          correct_answer: Json
+          course_id: string
+          created_at: string
+          explanation: string | null
+          id: string
+          options: Json
+          points: number
+          question: string
+          question_type: string
+          sort_order: number
+        }
+        Insert: {
+          correct_answer: Json
+          course_id: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options?: Json
+          points?: number
+          question: string
+          question_type?: string
+          sort_order?: number
+        }
+        Update: {
+          correct_answer?: Json
+          course_id?: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options?: Json
+          points?: number
+          question?: string
+          question_type?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      recipe_books: {
+        Row: {
+          allergy_info: string[]
+          batch_size: string | null
+          category: string
+          cook_steps: Json
+          cook_time: string | null
+          cost_info: Json | null
+          created_at: string
+          created_by: string
+          description: string | null
+          english_name: string | null
+          expiry_rule: string | null
+          id: string
+          organization_id: string | null
+          photo_url: string | null
+          plating_guide: string | null
+          prep_method: string | null
+          serving_size: string | null
+          status: string
+          storage_method: string | null
+          store_id: string
+          title: string
+          updated_at: string
+          version: number
+          video_url: string | null
+          visibility_scope: string
+          warnings: string | null
+        }
+        Insert: {
+          allergy_info?: string[]
+          batch_size?: string | null
+          category?: string
+          cook_steps?: Json
+          cook_time?: string | null
+          cost_info?: Json | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          english_name?: string | null
+          expiry_rule?: string | null
+          id?: string
+          organization_id?: string | null
+          photo_url?: string | null
+          plating_guide?: string | null
+          prep_method?: string | null
+          serving_size?: string | null
+          status?: string
+          storage_method?: string | null
+          store_id: string
+          title: string
+          updated_at?: string
+          version?: number
+          video_url?: string | null
+          visibility_scope?: string
+          warnings?: string | null
+        }
+        Update: {
+          allergy_info?: string[]
+          batch_size?: string | null
+          category?: string
+          cook_steps?: Json
+          cook_time?: string | null
+          cost_info?: Json | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          english_name?: string | null
+          expiry_rule?: string | null
+          id?: string
+          organization_id?: string | null
+          photo_url?: string | null
+          plating_guide?: string | null
+          prep_method?: string | null
+          serving_size?: string | null
+          status?: string
+          storage_method?: string | null
+          store_id?: string
+          title?: string
+          updated_at?: string
+          version?: number
+          video_url?: string | null
+          visibility_scope?: string
+          warnings?: string | null
+        }
+        Relationships: []
+      }
+      recipe_ingredients: {
+        Row: {
+          created_at: string
+          id: string
+          ingredient_id: string | null
+          ingredient_name: string
+          memo: string | null
+          quantity: number | null
+          recipe_id: string
+          sort_order: number
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingredient_id?: string | null
+          ingredient_name: string
+          memo?: string | null
+          quantity?: number | null
+          recipe_id: string
+          sort_order?: number
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingredient_id?: string | null
+          ingredient_name?: string
+          memo?: string | null
+          quantity?: number | null
+          recipe_id?: string
+          sort_order?: number
+          unit?: string | null
+        }
+        Relationships: []
+      }
+      recipe_versions: {
+        Row: {
+          change_log: string | null
+          created_at: string
+          created_by: string
+          id: string
+          recipe_id: string
+          snapshot: Json
+          version_number: number
+        }
+        Insert: {
+          change_log?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          recipe_id: string
+          snapshot: Json
+          version_number: number
+        }
+        Update: {
+          change_log?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          recipe_id?: string
+          snapshot?: Json
+          version_number?: number
+        }
+        Relationships: []
       }
       reservations: {
         Row: {
@@ -2193,6 +2517,138 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      training_assignments: {
+        Row: {
+          acknowledged_at: string | null
+          assigned_by: string
+          assigned_to_user_id: string
+          completed_at: string | null
+          course_id: string
+          created_at: string
+          due_date: string | null
+          id: string
+          quiz_score: number | null
+          started_at: string | null
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          assigned_by: string
+          assigned_to_user_id: string
+          completed_at?: string | null
+          course_id: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          quiz_score?: number | null
+          started_at?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          assigned_by?: string
+          assigned_to_user_id?: string
+          completed_at?: string | null
+          course_id?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          quiz_score?: number | null
+          started_at?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      training_course_items: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          item_id: string | null
+          item_type: string
+          sort_order: number
+          title: string | null
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_type: string
+          sort_order?: number
+          title?: string | null
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_type?: string
+          sort_order?: number
+          title?: string | null
+        }
+        Relationships: []
+      }
+      training_courses: {
+        Row: {
+          allow_quiz_retry: boolean
+          created_at: string
+          created_by: string
+          description: string | null
+          due_days: number | null
+          estimated_minutes: number | null
+          id: string
+          pass_threshold: number
+          required: boolean
+          status: string
+          store_id: string
+          target_roles: string[]
+          title: string
+          training_type: string
+          updated_at: string
+        }
+        Insert: {
+          allow_quiz_retry?: boolean
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_days?: number | null
+          estimated_minutes?: number | null
+          id?: string
+          pass_threshold?: number
+          required?: boolean
+          status?: string
+          store_id: string
+          target_roles?: string[]
+          title: string
+          training_type?: string
+          updated_at?: string
+        }
+        Update: {
+          allow_quiz_retry?: boolean
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_days?: number | null
+          estimated_minutes?: number | null
+          id?: string
+          pass_threshold?: number
+          required?: boolean
+          status?: string
+          store_id?: string
+          target_roles?: string[]
+          title?: string
+          training_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_consents: {
         Row: {
