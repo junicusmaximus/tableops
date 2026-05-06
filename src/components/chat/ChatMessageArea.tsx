@@ -464,7 +464,22 @@ const ChatMessageArea = ({
       </ScrollArea>
 
       {/* Input area */}
-      <div className="px-4 py-3 border-t border-border">
+      <div className="px-4 py-3 border-t border-border space-y-2">
+        {canPin && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmRequest((v) => !v)}
+              className={`text-[11px] px-2 py-1 rounded-full border transition-colors ${
+                confirmRequest
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              ✅ 확인 요청 {confirmRequest ? 'ON' : 'OFF'}
+            </button>
+          </div>
+        )}
         <div className="relative">
           <MentionDropdown
             members={members}
