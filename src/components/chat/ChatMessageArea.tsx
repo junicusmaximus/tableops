@@ -279,11 +279,11 @@ const ChatMessageArea = ({
         </div>
       )}
 
-      {/* Pinned message */}
-      <PinnedMessage
-        message={pinnedMessage}
-        onUnpin={() => onPinMessage?.(null)}
+      {/* Pinned messages panel */}
+      <PinnedMessagesPanel
+        pins={pins}
         canUnpin={!!canPin}
+        onUnpin={(id) => handleTogglePin(id, 'unpin')}
       />
 
       {/* Messages */}
@@ -429,6 +429,14 @@ const ChatMessageArea = ({
                             />
                           )}
 
+                          {/* Operational card */}
+                          {msg.message_type === 'card' && (
+                            <OperationalCard
+                              cardType={(msg as any).metadata?.cardType ?? 'announce'}
+                              metadata={(msg as any).metadata ?? {}}
+                            />
+                          )}
+
                           {/* Reactions */}
                           <MessageReactions
                             messageId={msg.id}
@@ -457,10 +465,17 @@ const ChatMessageArea = ({
                         )}
                       </div>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onPinMessage?.(msg.id)}>
-                          <Pin className="w-3.5 h-3.5 mr-2" />
-                          메시지 고정
-                        </DropdownMenuItem>
+                        {pinnedIds.has(msg.id) ? (
+                          <DropdownMenuItem onClick={() => handleTogglePin(msg.id, 'unpin')}>
+                            <Pin className="w-3.5 h-3.5 mr-2" />
+                            고정 해제
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handleTogglePin(msg.id, 'pin')}>
+                            <Pin className="w-3.5 h-3.5 mr-2" />
+                            메시지 고정
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
