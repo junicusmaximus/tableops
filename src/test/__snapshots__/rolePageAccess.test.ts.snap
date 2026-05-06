@@ -1,0 +1,261 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`role-based UI snapshot per role > snapshot: boss 1`] = `
+{
+  "isManager": true,
+  "managerOnlyRoutesAccessible": [
+    "/staff",
+    "/staff/123",
+    "/schedule-management",
+    "/ai-schedule",
+    "/ai-report",
+    "/sales",
+    "/ingredients",
+    "/purchase-orders",
+    "/settings/access-integration",
+  ],
+  "role": "boss",
+  "visibleNav": [
+    "대시보드",
+    "오늘의 브리핑",
+    "출퇴근 관리",
+    "근무 통계",
+    "내 스케줄",
+    "스케줄 관리",
+    "AI 스케줄 추천",
+    "휴가 관리",
+    "직원 관리",
+    "체크리스트",
+    "일지/보고서",
+    "매출 관리",
+    "고객 서비스 노트",
+    "식재료 관리",
+    "발주/입고",
+    "서류 관리",
+    "복리후생",
+    "용어/매뉴얼",
+    "교육/매뉴얼",
+    "채팅",
+    "AI 매장 리포트",
+  ],
+}
+`;
+
+exports[`role-based UI snapshot per role > snapshot: ceo 1`] = `
+{
+  "isManager": true,
+  "managerOnlyRoutesAccessible": [
+    "/staff",
+    "/staff/123",
+    "/schedule-management",
+    "/ai-schedule",
+    "/ai-report",
+    "/sales",
+    "/ingredients",
+    "/purchase-orders",
+    "/settings/access-integration",
+  ],
+  "role": "ceo",
+  "visibleNav": [
+    "대시보드",
+    "오늘의 브리핑",
+    "출퇴근 관리",
+    "근무 통계",
+    "내 스케줄",
+    "스케줄 관리",
+    "AI 스케줄 추천",
+    "휴가 관리",
+    "직원 관리",
+    "체크리스트",
+    "일지/보고서",
+    "매출 관리",
+    "고객 서비스 노트",
+    "식재료 관리",
+    "발주/입고",
+    "서류 관리",
+    "복리후생",
+    "용어/매뉴얼",
+    "교육/매뉴얼",
+    "채팅",
+    "AI 매장 리포트",
+  ],
+}
+`;
+
+exports[`role-based UI snapshot per role > snapshot: full_time 1`] = `
+{
+  "isManager": false,
+  "managerOnlyRoutesAccessible": [],
+  "role": "full_time",
+  "visibleNav": [
+    "대시보드",
+    "오늘의 브리핑",
+    "출퇴근 관리",
+    "근무 통계",
+    "내 스케줄",
+    "휴가 관리",
+    "체크리스트",
+    "일지/보고서",
+    "고객 서비스 노트",
+    "서류 관리",
+    "복리후생",
+    "용어/매뉴얼",
+    "교육/매뉴얼",
+    "채팅",
+  ],
+}
+`;
+
+exports[`role-based UI snapshot per role > snapshot: hall_staff 1`] = `
+{
+  "isManager": false,
+  "managerOnlyRoutesAccessible": [],
+  "role": "hall_staff",
+  "visibleNav": [
+    "대시보드",
+    "오늘의 브리핑",
+    "출퇴근 관리",
+    "근무 통계",
+    "내 스케줄",
+    "휴가 관리",
+    "체크리스트",
+    "일지/보고서",
+    "고객 서비스 노트",
+    "서류 관리",
+    "복리후생",
+    "용어/매뉴얼",
+    "교육/매뉴얼",
+    "채팅",
+  ],
+}
+`;
+
+exports[`role-based UI snapshot per role > snapshot: kitchen_staff 1`] = `
+{
+  "isManager": false,
+  "managerOnlyRoutesAccessible": [],
+  "role": "kitchen_staff",
+  "visibleNav": [
+    "대시보드",
+    "오늘의 브리핑",
+    "출퇴근 관리",
+    "근무 통계",
+    "내 스케줄",
+    "휴가 관리",
+    "체크리스트",
+    "일지/보고서",
+    "고객 서비스 노트",
+    "서류 관리",
+    "복리후생",
+    "용어/매뉴얼",
+    "교육/매뉴얼",
+    "채팅",
+  ],
+}
+`;
+
+exports[`role-based UI snapshot per role > snapshot: manager 1`] = `
+{
+  "isManager": true,
+  "managerOnlyRoutesAccessible": [
+    "/staff",
+    "/staff/123",
+    "/schedule-management",
+    "/ai-schedule",
+    "/ai-report",
+    "/sales",
+    "/ingredients",
+    "/purchase-orders",
+    "/settings/access-integration",
+  ],
+  "role": "manager",
+  "visibleNav": [
+    "대시보드",
+    "오늘의 브리핑",
+    "출퇴근 관리",
+    "근무 통계",
+    "내 스케줄",
+    "스케줄 관리",
+    "AI 스케줄 추천",
+    "휴가 관리",
+    "직원 관리",
+    "체크리스트",
+    "일지/보고서",
+    "매출 관리",
+    "고객 서비스 노트",
+    "식재료 관리",
+    "발주/입고",
+    "서류 관리",
+    "복리후생",
+    "용어/매뉴얼",
+    "교육/매뉴얼",
+    "채팅",
+    "AI 매장 리포트",
+  ],
+}
+`;
+
+exports[`role-based UI snapshot per role > snapshot: owner 1`] = `
+{
+  "isManager": true,
+  "managerOnlyRoutesAccessible": [
+    "/staff",
+    "/staff/123",
+    "/schedule-management",
+    "/ai-schedule",
+    "/ai-report",
+    "/sales",
+    "/ingredients",
+    "/purchase-orders",
+    "/settings/access-integration",
+  ],
+  "role": "owner",
+  "visibleNav": [
+    "대시보드",
+    "오늘의 브리핑",
+    "출퇴근 관리",
+    "근무 통계",
+    "내 스케줄",
+    "스케줄 관리",
+    "AI 스케줄 추천",
+    "휴가 관리",
+    "직원 관리",
+    "체크리스트",
+    "일지/보고서",
+    "매출 관리",
+    "고객 서비스 노트",
+    "식재료 관리",
+    "발주/입고",
+    "서류 관리",
+    "복리후생",
+    "용어/매뉴얼",
+    "교육/매뉴얼",
+    "채팅",
+    "AI 매장 리포트",
+  ],
+}
+`;
+
+exports[`role-based UI snapshot per role > snapshot: part_time 1`] = `
+{
+  "isManager": false,
+  "managerOnlyRoutesAccessible": [],
+  "role": "part_time",
+  "visibleNav": [
+    "대시보드",
+    "오늘의 브리핑",
+    "출퇴근 관리",
+    "근무 통계",
+    "내 스케줄",
+    "휴가 관리",
+    "체크리스트",
+    "일지/보고서",
+    "고객 서비스 노트",
+    "서류 관리",
+    "복리후생",
+    "용어/매뉴얼",
+    "교육/매뉴얼",
+    "채팅",
+  ],
+}
+`;
