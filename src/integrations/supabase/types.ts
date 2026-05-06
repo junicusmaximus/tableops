@@ -14,6 +14,162 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_import_batches: {
+        Row: {
+          file_name: string | null
+          id: string
+          imported_at: string
+          matched_count: number
+          notes: string | null
+          provider: string
+          row_count: number
+          status: string
+          store_id: string
+          unmatched_count: number
+          uploaded_by: string
+        }
+        Insert: {
+          file_name?: string | null
+          id?: string
+          imported_at?: string
+          matched_count?: number
+          notes?: string | null
+          provider: string
+          row_count?: number
+          status?: string
+          store_id: string
+          unmatched_count?: number
+          uploaded_by: string
+        }
+        Update: {
+          file_name?: string | null
+          id?: string
+          imported_at?: string
+          matched_count?: number
+          notes?: string | null
+          provider?: string
+          row_count?: number
+          status?: string
+          store_id?: string
+          unmatched_count?: number
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      access_integrations: {
+        Row: {
+          api_base_url: string | null
+          api_key: string | null
+          created_at: string
+          created_by: string
+          id: string
+          integration_mode: string
+          is_active: boolean
+          last_sync_at: string | null
+          last_sync_status: string | null
+          local_export_path: string | null
+          provider: string
+          provider_label: string | null
+          secret_key: string | null
+          store_id: string
+          sync_frequency: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_base_url?: string | null
+          api_key?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          integration_mode?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          local_export_path?: string | null
+          provider: string
+          provider_label?: string | null
+          secret_key?: string | null
+          store_id: string
+          sync_frequency?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_base_url?: string | null
+          api_key?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          integration_mode?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          local_export_path?: string | null
+          provider?: string
+          provider_label?: string | null
+          secret_key?: string | null
+          store_id?: string
+          sync_frequency?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      access_logs: {
+        Row: {
+          access_card_number: string | null
+          access_date: string
+          access_datetime: string
+          access_type: string | null
+          created_at: string
+          device_name: string | null
+          door_name: string | null
+          employee_number: string | null
+          employee_profile_id: string | null
+          id: string
+          import_batch_id: string | null
+          provider: string
+          provider_user_id: string | null
+          raw_employee_name: string | null
+          raw_payload: Json | null
+          store_id: string
+        }
+        Insert: {
+          access_card_number?: string | null
+          access_date: string
+          access_datetime: string
+          access_type?: string | null
+          created_at?: string
+          device_name?: string | null
+          door_name?: string | null
+          employee_number?: string | null
+          employee_profile_id?: string | null
+          id?: string
+          import_batch_id?: string | null
+          provider: string
+          provider_user_id?: string | null
+          raw_employee_name?: string | null
+          raw_payload?: Json | null
+          store_id: string
+        }
+        Update: {
+          access_card_number?: string | null
+          access_date?: string
+          access_datetime?: string
+          access_type?: string | null
+          created_at?: string
+          device_name?: string | null
+          door_name?: string | null
+          employee_number?: string | null
+          employee_profile_id?: string | null
+          id?: string
+          import_batch_id?: string | null
+          provider?: string
+          provider_user_id?: string | null
+          raw_employee_name?: string | null
+          raw_payload?: Json | null
+          store_id?: string
+        }
+        Relationships: []
+      }
       ai_reports: {
         Row: {
           created_at: string
@@ -57,10 +213,13 @@ export type Database = {
       }
       attendance_logs: {
         Row: {
+          access_check_in_at: string | null
+          access_check_out_at: string | null
           check_in_at: string | null
           check_out_at: string | null
           checkin_latitude: number | null
           checkin_longitude: number | null
+          confidence_score: number | null
           created_at: string
           date: string
           employee_profile_id: string
@@ -69,19 +228,30 @@ export type Database = {
           is_late: boolean | null
           is_outside_radius: boolean | null
           notes: string | null
+          reconciled_at: string | null
+          reconciled_by: string | null
+          reconciliation_note: string | null
+          reconciliation_status: string | null
           scheduled_end: string | null
           scheduled_start: string | null
+          source_access_log_id: string | null
+          source_provider: string | null
+          source_type: string | null
           status: string
           store_id: string
+          synced_at: string | null
           updated_at: string
           user_id: string
           work_hours: number | null
         }
         Insert: {
+          access_check_in_at?: string | null
+          access_check_out_at?: string | null
           check_in_at?: string | null
           check_out_at?: string | null
           checkin_latitude?: number | null
           checkin_longitude?: number | null
+          confidence_score?: number | null
           created_at?: string
           date?: string
           employee_profile_id: string
@@ -90,19 +260,30 @@ export type Database = {
           is_late?: boolean | null
           is_outside_radius?: boolean | null
           notes?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_note?: string | null
+          reconciliation_status?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
+          source_access_log_id?: string | null
+          source_provider?: string | null
+          source_type?: string | null
           status?: string
           store_id: string
+          synced_at?: string | null
           updated_at?: string
           user_id: string
           work_hours?: number | null
         }
         Update: {
+          access_check_in_at?: string | null
+          access_check_out_at?: string | null
           check_in_at?: string | null
           check_out_at?: string | null
           checkin_latitude?: number | null
           checkin_longitude?: number | null
+          confidence_score?: number | null
           created_at?: string
           date?: string
           employee_profile_id?: string
@@ -111,10 +292,18 @@ export type Database = {
           is_late?: boolean | null
           is_outside_radius?: boolean | null
           notes?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_note?: string | null
+          reconciliation_status?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
+          source_access_log_id?: string | null
+          source_provider?: string | null
+          source_type?: string | null
           status?: string
           store_id?: string
+          synced_at?: string | null
           updated_at?: string
           user_id?: string
           work_hours?: number | null
@@ -892,9 +1081,15 @@ export type Database = {
       }
       employee_profiles: {
         Row: {
+          access_card_number: string | null
+          access_consent_accepted: boolean | null
+          access_consent_accepted_at: string | null
+          access_provider: string | null
+          access_provider_user_id: string | null
           bio: string | null
           brand_id: string
           created_at: string
+          employee_number: string | null
           employment_type: string | null
           full_name: string
           hire_date: string | null
@@ -913,9 +1108,15 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          access_card_number?: string | null
+          access_consent_accepted?: boolean | null
+          access_consent_accepted_at?: string | null
+          access_provider?: string | null
+          access_provider_user_id?: string | null
           bio?: string | null
           brand_id: string
           created_at?: string
+          employee_number?: string | null
           employment_type?: string | null
           full_name: string
           hire_date?: string | null
@@ -934,9 +1135,15 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          access_card_number?: string | null
+          access_consent_accepted?: boolean | null
+          access_consent_accepted_at?: string | null
+          access_provider?: string | null
+          access_provider_user_id?: string | null
           bio?: string | null
           brand_id?: string
           created_at?: string
+          employee_number?: string | null
           employment_type?: string | null
           full_name?: string
           hire_date?: string | null
@@ -1226,8 +1433,10 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          enable_access_integration: boolean
           enable_all: boolean
           enable_announcement: boolean
+          enable_attendance_mismatch: boolean
           enable_checklist: boolean
           enable_document_sign: boolean
           enable_inventory: boolean
@@ -1240,8 +1449,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          enable_access_integration?: boolean
           enable_all?: boolean
           enable_announcement?: boolean
+          enable_attendance_mismatch?: boolean
           enable_checklist?: boolean
           enable_document_sign?: boolean
           enable_inventory?: boolean
@@ -1254,8 +1465,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          enable_access_integration?: boolean
           enable_all?: boolean
           enable_announcement?: boolean
+          enable_attendance_mismatch?: boolean
           enable_checklist?: boolean
           enable_document_sign?: boolean
           enable_inventory?: boolean
