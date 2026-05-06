@@ -148,32 +148,25 @@ const AccessIntegration = () => {
     }
   };
 
-  const findEmployeeMatch = (row: ParsedAccessRow): string | null => {
-    if (!employees) return null;
+  const findEmployeeMatch = (row: ParsedAccessRow): { id: string | null; consentBlocked: boolean } => {
+    if (!employees) return { id: null, consentBlocked: false };
+    const tryMatch = (predicate: (e: any) => boolean) => employees.find(predicate);
+    let m: any = null;
     const num = row.employee_number?.trim();
-    if (num) {
-      const m = employees.find((e: any) => e.employee_number === num);
-      if (m) return m.id;
-    }
+    if (!m && num) m = tryMatch((e: any) => e.employee_number === num);
     const card = row.access_card_number?.trim();
-    if (card) {
-      const m = employees.find((e: any) => e.access_card_number === card);
-      if (m) return m.id;
-    }
+    if (!m && card) m = tryMatch((e: any) => e.access_card_number === card);
     const pid = row.provider_user_id?.trim();
-    if (pid) {
-      const m = employees.find((e: any) => e.access_provider_user_id === pid);
-      if (m) return m.id;
-    }
+    if (!m && pid) m = tryMatch((e: any) => e.access_provider_user_id === pid);
     const name = row.employee_name?.trim();
-    if (name) {
-      const m = employees.find((e) => e.full_name === name);
-      if (m) return m.id;
-    }
-    return null;
+    if (!m && name) m = tryMatch((e: any) => e.full_name === name);
+    if (!m) return { id: null, consentBlocked: false };
+    // Enforce access_log_attendance consent before auto-linking
+    if (!m.access_consent_accepted) return { id: null, consentBlocked: true };
+    return { id: m.id, consentBlocked: false };
   };
 
-  const previewRows = useMemo<Array<ParsedAccessRow & { matchId: string | null }>>(() => {
+  const previewRows = useMemo<Array<ParsedAccessRow & { matchId: string | null; consentBlocked: boolean }>>(() => {
     if (!parsedRows.length) return [];
     const dtCol = columnMap.access_datetime;
     if (!dtCol) return [];
@@ -192,12 +185,14 @@ const AccessIntegration = () => {
           door_name: columnMap.door_name ? String(r[columnMap.door_name] ?? '') : undefined,
           raw: r,
         };
-        return { ...row, matchId: findEmployeeMatch(row) };
+        const match = findEmployeeMatch(row);
+        return { ...row, matchId: match.id, consentBlocked: match.consentBlocked };
       })
-      .filter(Boolean) as Array<ParsedAccessRow & { matchId: string | null }>;
+      .filter(Boolean) as Array<ParsedAccessRow & { matchId: string | null; consentBlocked: boolean }>;
   }, [parsedRows, columnMap, employees]);
 
   const unmatchedCount = previewRows.filter((r) => !r.matchId).length;
+  const consentBlockedCount = previewRows.filter((r) => r.consentBlocked).length;
 
   const doImport = async () => {
     if (!previewRows.length) return;
@@ -219,11 +214,12 @@ const AccessIntegration = () => {
           raw_payload: r.raw,
         })),
       });
+      const parts: string[] = [];
+      if (unmatchedCount > 0) parts.push(`${unmatchedCount}건 매칭 실패`);
+      if (consentBlockedCount > 0) parts.push(`${consentBlockedCount}건 동의 미완료로 자동 연결 제외`);
       toast({
         title: '출입기록을 업로드했습니다.',
-        description: unmatchedCount > 0
-          ? `${unmatchedCount}명 매칭되지 않은 직원이 있습니다.`
-          : '출입기록 가져오기가 완료되었습니다.',
+        description: parts.length ? parts.join(' · ') : '출입기록 가져오기가 완료되었습니다.',
       });
       setImportOpen(false);
       setParsedRows([]);

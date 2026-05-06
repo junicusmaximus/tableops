@@ -700,6 +700,48 @@ export type Database = {
           },
         ]
       }
+      consent_terms: {
+        Row: {
+          consent_type: string
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_required: boolean
+          role_scope: string[]
+          sort_order: number
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          consent_type: string
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          role_scope?: string[]
+          sort_order?: number
+          title: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          consent_type?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          role_scope?: string[]
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       document_audit_logs: {
         Row: {
           actor_name: string | null
@@ -1971,6 +2013,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_consents: {
+        Row: {
+          accepted: boolean
+          accepted_at: string | null
+          consent_type: string
+          consent_version: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          accepted: boolean
+          accepted_at?: string | null
+          consent_type: string
+          consent_version: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          accepted?: boolean
+          accepted_at?: string | null
+          consent_type?: string
+          consent_version?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: []
       }
       user_store_roles: {
         Row: {
