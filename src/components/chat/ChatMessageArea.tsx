@@ -146,6 +146,7 @@ const ChatMessageArea = ({
 
   const handleInputChange = (val: string) => {
     onMessageChange(val);
+    if (val.trim()) broadcastTyping();
 
     // Detect @mention typing
     const lastAt = val.lastIndexOf('@');
