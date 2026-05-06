@@ -16,7 +16,11 @@ import { toast } from 'sonner';
 import {
   Brain, Calendar, AlertTriangle, CheckCircle, Users, Clock,
   ChevronRight, Loader2, Sparkles, RefreshCw, Save, ArrowLeft,
+  Flame, Info, TrendingUp,
 } from 'lucide-react';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
 import { format, addDays, startOfWeek, endOfWeek, addWeeks, eachDayOfInterval } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useCreateShift } from '@/hooks/useShifts';
