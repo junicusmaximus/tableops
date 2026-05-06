@@ -36,7 +36,7 @@ const RoleSwitcher = () => {
   const current = useCurrentRole();
   const [open, setOpen] = useState(false);
 
-  if (!isDevOrStaging()) return null;
+  if (!isDevOrStagingHost()) return null;
 
   const apply = (role: AppRole | null) => {
     setRoleOverride(role);
