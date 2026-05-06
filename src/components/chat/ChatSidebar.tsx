@@ -28,9 +28,10 @@ interface ChatSidebarProps {
   selectedRoomId: string | null;
   onSelectRoom: (id: string) => void;
   onCreateRoom: () => void;
+  onStartDM?: () => void;
 }
 
-const ChatSidebar = ({ rooms, isLoading, selectedRoomId, onSelectRoom, onCreateRoom }: ChatSidebarProps) => {
+const ChatSidebar = ({ rooms, isLoading, selectedRoomId, onSelectRoom, onCreateRoom, onStartDM }: ChatSidebarProps) => {
   const [search, setSearch] = useState('');
 
   const channels = rooms.filter((r) => r.type === 'channel' || r.type === 'announcement');
@@ -134,8 +135,8 @@ const ChatSidebar = ({ rooms, isLoading, selectedRoomId, onSelectRoom, onCreateR
         </div>
       </ScrollArea>
 
-      {/* Create button */}
-      <div className="p-3 border-t border-border">
+      {/* Create buttons */}
+      <div className="p-3 border-t border-border space-y-1">
         <button
           onClick={onCreateRoom}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 rounded-md transition-colors"
@@ -143,6 +144,15 @@ const ChatSidebar = ({ rooms, isLoading, selectedRoomId, onSelectRoom, onCreateR
           <span className="text-lg leading-none">+</span>
           <span>새 채팅방</span>
         </button>
+        {onStartDM && (
+          <button
+            onClick={onStartDM}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>1:1 대화</span>
+          </button>
+        )}
       </div>
     </div>
   );

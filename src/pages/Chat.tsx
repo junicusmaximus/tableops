@@ -174,6 +174,7 @@ const Chat = () => {
             selectedRoomId={selectedRoomId}
             onSelectRoom={handleSelectRoom}
             onCreateRoom={() => setDialogOpen(true)}
+            onStartDM={() => setDmDialogOpen(true)}
           />
         </div>
         <div className="flex-1">
@@ -190,6 +191,7 @@ const Chat = () => {
             selectedRoomId={selectedRoomId}
             onSelectRoom={handleSelectRoom}
             onCreateRoom={() => setDialogOpen(true)}
+            onStartDM={() => setDmDialogOpen(true)}
           />
         ) : (
           <ChatMessageArea {...messageAreaProps} onBack={handleBack} showBackButton />
@@ -201,6 +203,14 @@ const Chat = () => {
         onOpenChange={setDialogOpen}
         onCreateRoom={handleCreateRoom}
         isPending={createRoom.isPending}
+      />
+
+      <NewDMDialog
+        open={dmDialogOpen}
+        onOpenChange={setDmDialogOpen}
+        members={members.filter((m) => m.user_id && m.user_id !== user?.id) as any}
+        onSelect={(m) => m.user_id && handleStartDM(m.user_id, m.full_name)}
+        isPending={createDM.isPending}
       />
     </div>
   );
