@@ -110,6 +110,20 @@ const Settings = () => {
               </CardHeader>
             </Card>
           </Link>
+          <Link to="/settings/sales-access">
+            <Card className="hover:bg-accent/30 transition-colors cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert className="w-5 h-5 text-primary" />
+                    <CardTitle className="text-base">매출 데이터 접근 권한</CardTitle>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <CardDescription>대표 전용 · 매니저의 매출 분석 접근 권한을 제어합니다.</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-4 mt-4">

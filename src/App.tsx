@@ -21,6 +21,9 @@ import Leave from "@/pages/Leave";
 import Checklists from "@/pages/Checklists";
 import Chat from "@/pages/Chat";
 import Sales from "@/pages/Sales";
+import SalesEntry from "@/pages/SalesEntry";
+import SalesImport from "@/pages/SalesImport";
+import SalesAccessSettings from "@/pages/SalesAccessSettings";
 import Reservations from "@/pages/Reservations";
 import Reports from "@/pages/Reports";
 import ServiceNotes from "@/pages/ServiceNotes";
@@ -95,6 +98,9 @@ const App = () => (
               <Route path="checklists" element={<Checklists />} />
               <Route path="chat" element={<Chat />} />
               <Route path="sales" element={<Sales />} />
+              <Route path="sales/entry" element={<SalesEntry />} />
+              <Route path="sales/import" element={<SalesImport />} />
+              <Route path="settings/sales-access" element={<SalesAccessSettings />} />
               <Route path="reservations" element={<Reservations />} />
               <Route path="reports" element={<Reports />} />
               <Route path="service-notes" element={<ServiceNotes />} />

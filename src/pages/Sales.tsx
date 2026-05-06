@@ -1,334 +1,359 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Plus, TrendingUp, TrendingDown, Target, Trash2, Edit2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ShieldAlert, Plus, Upload, TrendingUp, TrendingDown, Sparkles, BarChart3, Clock, CalendarDays, Building2 } from 'lucide-react';
 import {
-  useMonthlySales,
-  useMonthlyTarget,
-  useSalesSummary,
-  useUpsertSalesRecord,
-  useUpsertSalesTarget,
-  useDeleteSalesRecord,
-} from '@/hooks/useSales';
-
-const formatCurrency = (val: number) => `₩${val.toLocaleString()}`;
+  ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
+} from 'recharts';
+import { format } from 'date-fns';
+import { useSalesPermissions } from '@/hooks/useSalesPermissions';
+import { useSalesRecords, useStoresForUser, useLogSalesView } from '@/hooks/useSalesRecords';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import {
+  KRW, periodPresets, sumNet, dailyTrend, monthlyTrend, hourlyBreakdown, weekdayBreakdown,
+  yearOverYear, computeInsights, filterByPeriod, WEEKDAY_LABELS,
+} from '@/lib/salesAnalytics';
+import EmptyState from '@/components/common/EmptyState';
 
 const Sales = () => {
-  const { data: records = [], isLoading } = useMonthlySales();
-  const { data: target } = useMonthlyTarget();
-  const summary = useSalesSummary();
-  const upsertRecord = useUpsertSalesRecord();
-  const upsertTarget = useUpsertSalesTarget();
-  const deleteRecord = useDeleteSalesRecord();
+  const perms = useSalesPermissions();
+  const { data: profile } = useEmployeeProfile();
+  const { data: stores = [] } = useStoresForUser();
 
-  const [salesDialogOpen, setSalesDialogOpen] = useState(false);
-  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
-  const [editRecord, setEditRecord] = useState<{ id?: string; date: string; amount: string; notes: string }>({
-    date: format(new Date(), 'yyyy-MM-dd'),
-    amount: '',
-    notes: '',
-  });
-  const [targetInput, setTargetInput] = useState(target?.target_amount?.toString() ?? '');
+  const presets = useMemo(() => periodPresets(), []);
+  const [periodKey, setPeriodKey] = useState<keyof ReturnType<typeof periodPresets> | 'custom'>('thisMonth');
+  const [customFrom, setCustomFrom] = useState(presets.thisMonth.from);
+  const [customTo, setCustomTo] = useState(presets.thisMonth.to);
+  const [storeId, setStoreId] = useState<string>('all');
+  const [paymentMethod, setPaymentMethod] = useState<string>('all');
+  const [salesChannel, setSalesChannel] = useState<string>('all');
+  const [trendMode, setTrendMode] = useState<'daily' | 'monthly'>('daily');
 
-  const yearMonth = format(new Date(), 'yyyy-MM');
+  const range = periodKey === 'custom'
+    ? { from: customFrom, to: customTo }
+    : { from: presets[periodKey].from, to: presets[periodKey].to };
 
-  const handleSaveSales = () => {
-    const amount = Number(editRecord.amount);
-    if (!editRecord.date || isNaN(amount) || amount <= 0) {
-      toast.error('날짜와 금액을 올바르게 입력해주세요');
-      return;
+  const targetStoreIds = storeId === 'all' ? stores.map((s) => s.id) : [storeId];
+
+  const { data: rows = [], isLoading } = useSalesRecords(
+    perms.canView ? {
+      storeIds: targetStoreIds,
+      from: range.from,
+      to: range.to,
+      paymentMethod: paymentMethod === 'all' ? null : paymentMethod,
+      salesChannel: salesChannel === 'all' ? null : salesChannel,
+      includePrevYear: true,
+    } : null
+  );
+
+  const logView = useLogSalesView();
+  useEffect(() => {
+    if (perms.canView && targetStoreIds.length > 0) {
+      logView.mutate({ storeIds: targetStoreIds, period: `${range.from}~${range.to}` });
     }
-    upsertRecord.mutate(
-      { date: editRecord.date, amount, notes: editRecord.notes || undefined },
-      {
-        onSuccess: () => {
-          toast.success('매출이 저장되었습니다');
-          setSalesDialogOpen(false);
-          setEditRecord({ date: format(new Date(), 'yyyy-MM-dd'), amount: '', notes: '' });
-        },
-        onError: () => toast.error('매출 저장에 실패했습니다'),
-      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perms.canView, storeId, periodKey]);
+
+  // ── Permission gates ─────────────────────────────────
+  if (perms.loading) {
+    return <div className="p-8 text-center text-muted-foreground text-sm">로딩 중...</div>;
+  }
+  if (!perms.canView) {
+    return (
+      <Card>
+        <CardContent className="py-16 text-center">
+          <ShieldAlert className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+          <p className="text-base font-medium text-foreground">
+            {perms.blockedReason ?? '대표자 권한 설정에 의해 매출 분석 접근이 제한되었습니다.'}
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">권한이 필요한 경우 대표자에게 문의해 주세요.</p>
+        </CardContent>
+      </Card>
     );
-  };
+  }
 
-  const handleSaveTarget = () => {
-    const amount = Number(targetInput);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error('목표 금액을 올바르게 입력해주세요');
-      return;
-    }
-    upsertTarget.mutate(
-      { yearMonth, targetAmount: amount },
-      {
-        onSuccess: () => {
-          toast.success('목표가 설정되었습니다');
-          setTargetDialogOpen(false);
-        },
-        onError: () => toast.error('목표 설정에 실패했습니다'),
-      }
-    );
-  };
+  const periodRows = filterByPeriod(rows, range.from, range.to);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todaySales = sumNet(filterByPeriod(rows, todayStr, todayStr));
+  const monthStart = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
+  const monthEnd = format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), 'yyyy-MM-dd');
+  const monthTotal = sumNet(filterByPeriod(rows, monthStart, monthEnd));
 
-  const handleDelete = (id: string) => {
-    if (!confirm('이 매출 기록을 삭제하시겠습니까?')) return;
-    deleteRecord.mutate(id, {
-      onSuccess: () => toast.success('삭제되었습니다'),
-      onError: () => toast.error('삭제에 실패했습니다'),
+  const yoy = yearOverYear(rows, new Date());
+  const trend = trendMode === 'daily' ? dailyTrend(periodRows) : monthlyTrend(periodRows);
+  const hourly = hourlyBreakdown(periodRows);
+  const weekday = weekdayBreakdown(periodRows);
+  const insights = computeInsights(periodRows, new Date());
+
+  // Daily average over the period
+  const uniqueDays = new Set(periodRows.map((r) => r.business_date ?? r.date)).size || 1;
+  const dailyAvg = sumNet(periodRows) / uniqueDays;
+
+  const peakWeekday = [...weekday].sort((a, b) => b.total - a.total)[0];
+  const peakHour = [...hourly].sort((a, b) => b.total - a.total)[0];
+
+  // Branch comparison data
+  const branchData = useMemo(() => {
+    if (!perms.canViewBranchComparison || stores.length < 2) return [];
+    const map = new Map<string, number>();
+    periodRows.forEach((r) => {
+      map.set(r.store_id, (map.get(r.store_id) ?? 0) + Number(r.net_sales ?? r.amount ?? 0));
     });
-  };
+    return stores.map((s) => ({ name: s.name, total: map.get(s.id) ?? 0 }));
+  }, [periodRows, stores, perms.canViewBranchComparison]);
 
-  const openEdit = (record: { id: string; date: string; amount: number; notes: string | null }) => {
-    setEditRecord({
-      id: record.id,
-      date: record.date,
-      amount: record.amount.toString(),
-      notes: record.notes ?? '',
-    });
-    setSalesDialogOpen(true);
-  };
+  const yoyChartData = [
+    { label: '전년 동월', total: yoy.prevTotal },
+    { label: '이번 월', total: yoy.currentTotal },
+  ];
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">매출 관리</h1>
-          <p className="text-muted-foreground text-sm mt-1">일별 매출 입력 및 목표 달성 현황</p>
+          <h1 className="text-2xl font-bold">매출 분석</h1>
+          <p className="text-muted-foreground text-sm mt-1">기간별·채널별 매출 추이와 인사이트</p>
         </div>
         <div className="flex gap-2">
-          {/* Target Dialog */}
-          <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" onClick={() => setTargetInput(target?.target_amount?.toString() ?? '')}>
-                <Target className="w-4 h-4 mr-2" />
-                월 목표
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{format(new Date(), 'yyyy년 M월', { locale: ko })} 매출 목표</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 mt-2">
-                <div>
-                  <Label>목표 금액 (원)</Label>
-                  <Input
-                    type="number"
-                    placeholder="65000000"
-                    value={targetInput}
-                    onChange={(e) => setTargetInput(e.target.value)}
-                  />
-                </div>
-                <Button className="w-full" onClick={handleSaveTarget} disabled={upsertTarget.isPending}>
-                  저장
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Sales Entry Dialog */}
-          <Dialog open={salesDialogOpen} onOpenChange={(open) => {
-            setSalesDialogOpen(open);
-            if (!open) setEditRecord({ date: format(new Date(), 'yyyy-MM-dd'), amount: '', notes: '' });
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                매출 입력
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editRecord.id ? '매출 수정' : '매출 입력'}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 mt-2">
-                <div>
-                  <Label>날짜</Label>
-                  <Input
-                    type="date"
-                    value={editRecord.date}
-                    onChange={(e) => setEditRecord((prev) => ({ ...prev, date: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>매출 금액 (원)</Label>
-                  <Input
-                    type="number"
-                    placeholder="1500000"
-                    value={editRecord.amount}
-                    onChange={(e) => setEditRecord((prev) => ({ ...prev, amount: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>메모 (선택)</Label>
-                  <Input
-                    placeholder="특이사항 입력"
-                    value={editRecord.notes}
-                    onChange={(e) => setEditRecord((prev) => ({ ...prev, notes: e.target.value }))}
-                  />
-                </div>
-                <Button className="w-full" onClick={handleSaveSales} disabled={upsertRecord.isPending}>
-                  저장
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Link to="/sales/import"><Button variant="outline" size="sm"><Upload className="w-4 h-4 mr-1" />CSV 업로드</Button></Link>
+          <Link to="/sales/entry"><Button size="sm"><Plus className="w-4 h-4 mr-1" />매출 입력</Button></Link>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4 text-center">
-            <p className="text-xs text-muted-foreground">오늘 매출</p>
-            <p className="text-xl font-bold mt-1">{formatCurrency(summary.todaySales)}</p>
-            {summary.dailyChange !== 0 && (
-              <div className="flex items-center justify-center gap-1 mt-1">
-                {summary.dailyChange >= 0 ? (
-                  <TrendingUp className="w-3 h-3 text-emerald-500" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 text-destructive" />
-                )}
-                <span className={`text-xs ${summary.dailyChange >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
-                  {summary.dailyChange >= 0 ? '+' : ''}{summary.dailyChange.toFixed(1)}% 전일대비
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 text-center">
-            <p className="text-xs text-muted-foreground">주간 매출</p>
-            <p className="text-xl font-bold mt-1">{formatCurrency(summary.weekSales)}</p>
-            {summary.weeklyChange !== 0 && (
-              <div className="flex items-center justify-center gap-1 mt-1">
-                {summary.weeklyChange >= 0 ? (
-                  <TrendingUp className="w-3 h-3 text-emerald-500" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 text-destructive" />
-                )}
-                <span className={`text-xs ${summary.weeklyChange >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
-                  {summary.weeklyChange >= 0 ? '+' : ''}{summary.weeklyChange.toFixed(1)}% 전주대비
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 text-center">
-            <p className="text-xs text-muted-foreground">월간 목표</p>
-            <p className="text-xl font-bold mt-1">
-              {summary.targetAmount > 0 ? formatCurrency(summary.targetAmount) : '미설정'}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 text-center">
-            <p className="text-xs text-muted-foreground">달성률</p>
-            <p className="text-xl font-bold mt-1">{summary.achievementRate.toFixed(1)}%</p>
-            <Progress value={Math.min(summary.achievementRate, 100)} className="h-1.5 mt-2" />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Daily Sales List */}
+      {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">일별 매출</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-4">로딩 중...</p>
-          ) : records.length === 0 ? (
-            <div className="text-center py-6">
-              <p className="text-sm text-muted-foreground">매출 기록이 없습니다</p>
-              <p className="text-xs text-muted-foreground mt-1">상단의 '매출 입력' 버튼으로 추가해보세요</p>
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">매장</label>
+              <Select value={storeId} onValueChange={setStoreId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 매장</SelectItem>
+                  {stores.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            records.map((record) => {
-              const targetDaily = summary.targetAmount > 0 ? summary.targetAmount / 30 : 0;
-              const pct = targetDaily > 0 ? (Number(record.amount) / targetDaily) * 100 : 0;
-              return (
-                <div key={record.id} className="space-y-1">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-medium">
-                      {format(new Date(record.date), 'M/d (EEE)', { locale: ko })}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span>{formatCurrency(Number(record.amount))}</span>
-                      {targetDaily > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          / {formatCurrency(Math.round(targetDaily))}
-                        </span>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => openEdit(record)}
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-destructive"
-                        onClick={() => handleDelete(record.id)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  {targetDaily > 0 && <Progress value={Math.min(pct, 100)} className="h-2" />}
-                  {record.notes && (
-                    <p className="text-xs text-muted-foreground">{record.notes}</p>
-                  )}
-                </div>
-              );
-            })
-          )}
+            <div>
+              <label className="text-xs text-muted-foreground">기간</label>
+              <Select value={periodKey} onValueChange={(v: any) => setPeriodKey(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">오늘</SelectItem>
+                  <SelectItem value="thisWeek">이번 주</SelectItem>
+                  <SelectItem value="thisMonth">이번 달</SelectItem>
+                  <SelectItem value="lastMonth">지난 달</SelectItem>
+                  <SelectItem value="thisYear">올해</SelectItem>
+                  <SelectItem value="custom">사용자 지정</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">결제수단</label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="card">카드</SelectItem>
+                  <SelectItem value="cash">현금</SelectItem>
+                  <SelectItem value="delivery">배달</SelectItem>
+                  <SelectItem value="other">기타</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">판매채널</label>
+              <Select value={salesChannel} onValueChange={setSalesChannel}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="dine_in">매장</SelectItem>
+                  <SelectItem value="delivery">배달</SelectItem>
+                  <SelectItem value="takeout">포장</SelectItem>
+                  <SelectItem value="reservation">예약</SelectItem>
+                  <SelectItem value="other">기타</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {periodKey === 'custom' && (
+              <div className="col-span-2 md:col-span-1 grid grid-cols-2 gap-2">
+                <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
+                <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Monthly Achievement */}
-      {summary.targetAmount > 0 && (
+      {/* No-data state */}
+      {!isLoading && rows.length === 0 ? (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {format(new Date(), 'yyyy년 M월', { locale: ko })} 목표 달성 현황
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>누적 매출</span>
-                <span className="font-medium">{formatCurrency(summary.monthTotal)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>목표</span>
-                <span className="font-medium">{formatCurrency(summary.targetAmount)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>남은 금액</span>
-                <span className="font-medium">
-                  {formatCurrency(Math.max(summary.targetAmount - summary.monthTotal, 0))}
-                </span>
-              </div>
-              <Progress value={Math.min(summary.achievementRate, 100)} className="h-3 mt-2" />
-              <p className="text-center text-sm font-semibold mt-1">
-                {summary.achievementRate.toFixed(1)}% 달성
-              </p>
-            </div>
+          <CardContent className="py-12">
+            <EmptyState
+              title="매출 분석을 위한 데이터가 없습니다."
+              description="매출 데이터를 직접 입력하거나 CSV로 업로드해주세요."
+              icon={BarChart3}
+              action={
+                <div className="flex gap-2">
+                  <Link to="/sales/entry"><Button size="sm"><Plus className="w-4 h-4 mr-1" />매출 직접 입력</Button></Link>
+                  <Link to="/sales/import"><Button variant="outline" size="sm"><Upload className="w-4 h-4 mr-1" />CSV 업로드</Button></Link>
+                  <Link to="/settings"><Button variant="ghost" size="sm">연동 설정으로 이동</Button></Link>
+                </div>
+              }
+            />
           </CardContent>
         </Card>
+      ) : (
+        <>
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard title="오늘 매출" value={KRW(todaySales)} />
+            <KpiCard title="이번달 누적" value={KRW(monthTotal)} />
+            <KpiCard title="전년 동월" value={yoy.hasPrev ? KRW(yoy.prevTotal) : '데이터 없음'} />
+            <KpiCard
+              title="전년 동월 대비"
+              value={yoy.hasPrev ? `${yoy.growthPct >= 0 ? '+' : ''}${yoy.growthPct.toFixed(1)}%` : '-'}
+              trend={yoy.hasPrev ? (yoy.growthPct >= 0 ? 'up' : 'down') : undefined}
+            />
+            <KpiCard title="평균 일매출" value={KRW(dailyAvg)} />
+            <KpiCard title="최고 매출 요일" value={peakWeekday?.total ? `${peakWeekday.label}요일` : '-'} />
+            <KpiCard title="최고 매출 시간대" value={peakHour?.total ? peakHour.label : '-'} />
+            <KpiCard title="기간 합계" value={KRW(sumNet(periodRows))} />
+          </div>
+
+          {/* Trend */}
+          <Card>
+            <CardHeader className="pb-2 flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2"><TrendingUp className="w-4 h-4" /> 매출 추이</CardTitle>
+              <Tabs value={trendMode} onValueChange={(v: any) => setTrendMode(v)}>
+                <TabsList>
+                  <TabsTrigger value="daily">일별</TabsTrigger>
+                  <TabsTrigger value="monthly">월별</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={trend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey={trendMode === 'daily' ? 'date' : 'month'} stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `${(v / 10000).toFixed(0)}만`} />
+                  <Tooltip formatter={(v: number) => KRW(v)} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                  <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* YoY + Insights */}
+          <div className="grid md:grid-cols-2 gap-3">
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">전년 동일월 비교</CardTitle></CardHeader>
+              <CardContent>
+                {yoy.hasPrev ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={yoyChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `${(v / 10000).toFixed(0)}만`} />
+                        <Tooltip formatter={(v: number) => KRW(v)} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                        <Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="flex items-center justify-center gap-2 mt-2">
+                      {yoy.growthPct >= 0
+                        ? <Badge className="bg-emerald-500/15 text-emerald-500"><TrendingUp className="w-3 h-3 mr-1" />매출 증가 {yoy.growthPct.toFixed(1)}%</Badge>
+                        : <Badge className="bg-destructive/15 text-destructive"><TrendingDown className="w-3 h-3 mr-1" />매출 감소 {Math.abs(yoy.growthPct).toFixed(1)}%</Badge>}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-12">전년 동월 데이터가 없습니다.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> 인사이트</CardTitle></CardHeader>
+              <CardContent>
+                {insights.length === 0
+                  ? <p className="text-sm text-muted-foreground">인사이트를 도출할 데이터가 부족합니다.</p>
+                  : <ul className="space-y-2">{insights.map((s, i) => (
+                      <li key={i} className="text-sm flex gap-2"><span className="text-primary">•</span><span>{s}</span></li>
+                    ))}</ul>}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Hourly + Weekday */}
+          <div className="grid md:grid-cols-2 gap-3">
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Clock className="w-4 h-4" /> 시간대별 매출</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={hourly.filter((h) => h.total > 0)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickFormatter={(v) => `${(v / 10000).toFixed(0)}만`} />
+                    <Tooltip formatter={(v: number) => KRW(v)} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><CalendarDays className="w-4 h-4" /> 요일별 매출</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={weekday}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickFormatter={(v) => `${(v / 10000).toFixed(0)}만`} />
+                    <Tooltip formatter={(v: number) => KRW(v)} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Branch comparison */}
+          {branchData.length >= 2 && (
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Building2 className="w-4 h-4" /> 지점별 매출 비교</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={branchData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickFormatter={(v) => `${(v / 10000).toFixed(0)}만`} />
+                    <Tooltip formatter={(v: number) => KRW(v)} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );
 };
+
+const KpiCard = ({ title, value, trend }: { title: string; value: string; trend?: 'up' | 'down' }) => (
+  <Card>
+    <CardContent className="pt-4">
+      <p className="text-xs text-muted-foreground">{title}</p>
+      <p className={`text-lg font-bold mt-1 ${trend === 'up' ? 'text-emerald-500' : trend === 'down' ? 'text-destructive' : ''}`}>{value}</p>
+    </CardContent>
+  </Card>
+);
 
 export default Sales;
