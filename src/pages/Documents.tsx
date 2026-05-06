@@ -25,6 +25,7 @@ const Documents = () => {
   const { toast } = useToast();
   const isManager = useIsManager();
   const [search, setSearch] = useState('');
+  const [systemDialogOpen, setSystemDialogOpen] = useState(false);
 
   const { data: templates = [], isLoading: tplLoading } = useDocumentTemplates();
   const { data: received = [] } = useReceivedDocuments();
