@@ -38,13 +38,16 @@ export default function DocumentSign() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [req?.id]);
 
-  const schema: DocumentSchema = (req?.document_schema as any) ?? { blocks: [] };
+  const rawSchema: any = req?.document_schema ?? { blocks: [] };
+  const schema: DocumentSchema = { blocks: rawSchema.blocks ?? [] };
+  const embeddedCtx: Record<string, string> = rawSchema.smartContext ?? {};
   const smartCtx: Record<string, string> = useMemo(() => ({
     회사명: '', 매장명: '', 직원명: profile?.full_name ?? '', 직급: profile?.position ?? '',
     휴대전화번호: profile?.phone ?? '', 입사일: profile?.hire_date ?? '', 근무장소: '',
     시급: '', 월급: '', 계약시작일: '', 계약종료일: '',
     작성일: new Date().toISOString().slice(0, 10),
-  }), [profile]);
+    ...embeddedCtx,
+  }), [profile, JSON.stringify(embeddedCtx)]);
 
   const fieldBlocks = schema.blocks.filter((b): b is FieldBlock => b.type === 'field' && b.assignedTo !== 'sender');
   const requiredFields = fieldBlocks.filter((b) => b.required && b.fieldType !== 'signature');
