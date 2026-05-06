@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Calendar, ClipboardCheck, FileText, TrendingUp, Users,
   AlertTriangle, ShoppingCart, Briefcase, Upload, Gift,
-  BookOpen, Bell, Store, Settings, Coffee, Notebook, Sparkles, Brain
+  BookOpen, Bell, Store, Settings, Coffee, Notebook, Sparkles, Brain, GraduationCap
 } from 'lucide-react';
 
 const menuItems = [
@@ -20,6 +20,7 @@ const menuItems = [
   { to: '/documents', icon: Upload, label: '서류', color: 'text-muted-foreground' },
   { to: '/benefits', icon: Gift, label: '복리후생', color: 'text-accent' },
   { to: '/glossary', icon: BookOpen, label: '용어사전', color: 'text-primary' },
+  { to: '/knowledge', icon: GraduationCap, label: '교육/매뉴얼', color: 'text-accent' },
   { to: '/announcements', icon: Bell, label: '공지사항', color: 'text-info' },
   { to: '/staff', icon: Users, label: '직원 관리', color: 'text-success' },
   { to: '/stores', icon: Store, label: '매장 관리', color: 'text-success' },
