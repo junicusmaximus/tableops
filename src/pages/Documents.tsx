@@ -75,6 +75,9 @@ const Documents = () => {
                 기본 템플릿 추가
               </Button>
             )}
+            <Button variant="outline" onClick={() => setSystemDialogOpen(true)}>
+              <FilePlus2 className="w-4 h-4 mr-1" />새 전자문서 만들기
+            </Button>
             <Button onClick={() => navigate('/documents/templates/new')}>
               <Plus className="w-4 h-4 mr-1" />새 템플릿
             </Button>
