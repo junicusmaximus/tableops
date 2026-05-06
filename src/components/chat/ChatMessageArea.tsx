@@ -10,8 +10,12 @@ import ProfileCard from '@/components/profile/ProfileCard';
 import MentionDropdown from '@/components/chat/MentionDropdown';
 import PinnedMessage from '@/components/chat/PinnedMessage';
 import FilePreview from '@/components/chat/FilePreview';
+import MessageReactions from '@/components/chat/MessageReactions';
+import ConfirmationCard from '@/components/chat/ConfirmationCard';
 import type { ChatRoom, ChatMessage } from '@/hooks/useChat';
 import type { MentionMember } from '@/components/chat/MentionDropdown';
+import { useChatReactions } from '@/hooks/useChatReactions';
+import { useChatConfirmations } from '@/hooks/useChatConfirmations';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
