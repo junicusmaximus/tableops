@@ -21,7 +21,7 @@ import {
 const TEST_ROLES: AppRole[] = ['ceo', 'manager', 'full_time', 'part_time', 'hall_staff', 'kitchen_staff'];
 
 // Show only in dev/staging — hidden on production (published Lovable app or custom domain)
-const isDevOrStaging = (): boolean => {
+export const isDevOrStagingHost = (): boolean => {
   if (import.meta.env.DEV) return true;
   if (typeof window === 'undefined') return false;
   const host = window.location.hostname;
