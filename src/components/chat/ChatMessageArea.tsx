@@ -165,10 +165,13 @@ const ChatMessageArea = ({
 
   const handleSend = () => {
     if (!message.trim()) return;
-    // Also detect mentions from final message content
     const allMentions = [...new Set(pendingMentions)];
-    onSend(allMentions.length > 0 ? allMentions : undefined);
+    onSend(
+      allMentions.length > 0 ? allMentions : undefined,
+      confirmRequest ? { messageType: 'confirmation' } : undefined,
+    );
     setPendingMentions([]);
+    setConfirmRequest(false);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
