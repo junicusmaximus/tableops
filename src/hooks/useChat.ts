@@ -407,6 +407,53 @@ export const useCreateChatRoom = () => {
   });
 };
 
+export const useCreateDM = () => {
+  const { user } = useAuth();
+  const { data: profile } = useEmployeeProfile();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ otherUserId, otherName }: { otherUserId: string; otherName: string }) => {
+      if (!user || !profile?.store_id) throw new Error('Not authenticated');
+      const db = supabase as any;
+
+      // Try to find existing DM between the two users in this store
+      const { data: existingRooms } = await db
+        .from('chat_rooms')
+        .select('id, chat_room_members(user_id)')
+        .eq('store_id', profile.store_id)
+        .eq('type', 'dm');
+
+      const existing = (existingRooms ?? []).find((r: any) => {
+        const ids = (r.chat_room_members ?? []).map((m: any) => m.user_id);
+        return ids.length === 2 && ids.includes(user.id) && ids.includes(otherUserId);
+      });
+      if (existing) return { id: existing.id } as any;
+
+      const { data: room, error } = await db
+        .from('chat_rooms')
+        .insert({
+          store_id: profile.store_id,
+          name: otherName,
+          type: 'dm',
+          created_by: user.id,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+
+      await db.from('chat_room_members').insert([
+        { room_id: room.id, user_id: user.id },
+        { room_id: room.id, user_id: otherUserId },
+      ]);
+      return room;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat-rooms'] });
+    },
+  });
+};
+
 export const usePinMessage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
