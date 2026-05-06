@@ -4,6 +4,7 @@ import { Bell, Search, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications';
+import RoleSwitcher from '@/components/dev/RoleSwitcher';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -105,6 +106,7 @@ const TopHeader = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <RoleSwitcher />
             <Button variant="ghost" size="icon" className="relative cursor-pointer" onClick={() => setNotifOpen(true)}>
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
