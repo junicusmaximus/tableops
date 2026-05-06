@@ -84,6 +84,7 @@ interface ChatMessageAreaProps {
   canPin?: boolean;
   onFileUpload?: (file: File) => void;
   isUploading?: boolean;
+  myName?: string;
 }
 
 const ChatMessageArea = ({
@@ -103,6 +104,7 @@ const ChatMessageArea = ({
   canPin,
   onFileUpload,
   isUploading,
+  myName,
 }: ChatMessageAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -122,6 +124,9 @@ const ChatMessageArea = ({
   };
   const { data: reactions = [] } = useChatReactions(room?.id ?? null, messageIds);
   const { data: confirmations = [] } = useChatConfirmations(room?.id ?? null, messageIds);
+  const { typingUsers, broadcastTyping } = useTypingIndicator(room?.id ?? null, myName);
+  const isAnnouncementRoom = !!(room as any)?.is_announcement;
+  const canPostInRoom = !isAnnouncementRoom || !!canPin;
   const reactionsByMessage = reactions.reduce<Record<string, typeof reactions>>((acc, r) => {
     (acc[r.message_id] ||= []).push(r);
     return acc;
